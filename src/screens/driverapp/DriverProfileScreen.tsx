@@ -1,0 +1,77 @@
+import React from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { CommonActions } from '@react-navigation/native';
+import { MainTabParamList } from '../../types';
+import theme from '../../theme';
+import { useAppState } from '../../state/AppState';
+
+type DriverProfileScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Profile'>;
+
+interface Props {
+  navigation: DriverProfileScreenNavigationProp;
+}
+
+const Row = ({ icon, label, value }: { icon: any; label: string; value: string }) => (
+  <View style={styles.row}>
+    <Ionicons name={icon} size={18} color={theme.colors.text.secondary} />
+    <Text style={styles.rowLabel}>{label}</Text>
+    <Text style={styles.rowValue}>{value}</Text>
+  </View>
+);
+
+const DriverProfileScreen: React.FC<Props> = ({ navigation }) => {
+  const { logout } = useAppState();
+
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: () => {
+          logout();
+          // Reset to root navigation to splash screen
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'Splash' }],
+            })
+          );
+        },
+      },
+    ]);
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Profile</Text>
+
+      <View style={styles.card}>
+        <Row icon="person" label="Name" value="R. Kumar" />
+        <Row icon="call" label="Phone" value="98xxxxxx10" />
+        <Row icon="car" label="Vehicle" value="TS09 AB 1234" />
+        <Row icon="card" label="DL Status" value="Verified" />
+      </View>
+
+      <TouchableOpacity style={styles.logout} onPress={handleLogout}>
+        <Ionicons name="log-out" size={18} color="#fff" />
+        <Text style={styles.logoutText}>Log out</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.background.primary, padding: theme.spacing.lg },
+  title: { fontSize: theme.fontSizes.xl, fontWeight: theme.fontWeights.bold, color: theme.colors.text.primary, marginBottom: theme.spacing.md },
+  card: { backgroundColor: theme.colors.background.secondary, borderRadius: theme.borderRadius.xl, padding: theme.spacing.lg, ...theme.shadows.lg },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 },
+  rowLabel: { flex: 1, color: theme.colors.text.secondary },
+  rowValue: { color: theme.colors.text.primary, fontWeight: theme.fontWeights.semiBold },
+  logout: { marginTop: theme.spacing.lg, backgroundColor: theme.colors.error, borderRadius: theme.borderRadius.lg, padding: theme.spacing.md, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  logoutText: { color: '#fff', fontWeight: theme.fontWeights.bold },
+});
+
+export default DriverProfileScreen;

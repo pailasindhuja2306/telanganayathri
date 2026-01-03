@@ -1,0 +1,240 @@
+/* Web-specific styles for Telangana Yatri */
+/* Ensures proper scrolling and mobile responsiveness on web */
+
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    background-color: #F8FAFC;
+    color: #1E293B;
+}
+
+#root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* GestureHandlerRootView and its children */
+#root>div {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* All nested flex containers must have min-height: 0 to allow proper scrolling */
+#root div {
+    min-height: 0;
+}
+
+/* NavigationContainer and Stack Navigator containers */
+#root>div>div,
+#root>div>div>div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Stack screen cards - ensure proper height */
+#root>div>div>div>div>div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* SafeAreaView containers - ensure they fill height and allow children to scroll */
+#root div[style*="flex: 1"] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/*
+ * CRITICAL: React Native Web ScrollView fix
+ * ScrollView renders as a div with overflow-y: scroll or overflow: scroll auto
+ * We need to ensure these can actually scroll by having a constrained height parent
+ */
+div[style*="overflow-y: scroll"],
+div[style*="overflow: scroll"],
+div[style*="overflow-y: auto"],
+div[style*="overflow: auto"] {
+    flex: 1;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain;
+}
+
+/* Ensure ScrollView content container can grow */
+div[style*="overflow-y: scroll"]>div,
+div[style*="overflow: scroll"]>div,
+div[style*="overflow-y: auto"]>div,
+div[style*="overflow: auto"]>div {
+    min-height: min-content;
+}
+
+/* Fix for iOS Safari scroll issues */
+@supports (-webkit-touch-callout: none) {
+    body {
+        height: -webkit-fill-available;
+    }
+
+    #root {
+        min-height: -webkit-fill-available;
+    }
+}
+
+/* React Native Web focus styles */
+[data-focusable="true"]:focus {
+    outline: 2px solid #6366F1;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 767px) {
+
+    html,
+    body {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    #root {
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    body {
+        font-size: 16px;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+    #root {
+        max-width: 100%;
+    }
+
+    body {
+        font-size: 17px;
+    }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1024px) {
+    #root {
+        max-width: 1200px;
+        margin: 0 auto;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    /* Add subtle animations */
+    * {
+        transition: all 0.2s ease-in-out;
+    }
+}
+
+/* Large desktop */
+@media (min-width: 1440px) {
+    #root {
+        max-width: 1400px;
+    }
+}
+
+/* Prevent pull-to-refresh on mobile browsers */
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* Better touch experience */
+button,
+a,
+[role="button"] {
+    touch-action: manipulation;
+    cursor: pointer;
+}
+
+/* Smooth scrolling */
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+/* Custom scrollbar for web */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+/* Hover effects for desktop */
+@media (min-width: 1024px) {
+    button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    [role="button"]:hover {
+        transform: translateY(-1px);
+    }
+}

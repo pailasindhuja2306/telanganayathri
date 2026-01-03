@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <title>Telangana Yatri - Your Travel Companion</title>
+    <meta name="description" content="Telangana Yatri - Premium ride booking, tour packages, and dedicated women safety travel services in Telangana." />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#6A5AE0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- Web-specific styles for scrolling and mobile responsiveness -->
+    <link rel="stylesheet" href="/web-styles.css" />
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-overflow-scrolling: touch;
+            background-color: #4C3CC5;
+            overscroll-behavior: none;
+        }
+
+        #root {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #4C3CC5;
+            z-index: 9999;
+        }
+        
+        .loading-logo {
+            font-size: 48px;
+            font-weight: bold;
+            color: #D4AF37;
+            margin-bottom: 24px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(212, 175, 55, 0.1);
+            border-top-color: #D4AF37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            margin-top: 24px;
+            color: #FFFFFF;
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .loading-logo {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <div id="root">
+        <div id="loading-screen">
+            <div class="loading-logo">Telangana Yatri</div>
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading your journey...</div>
+        </div>
+    </div>
+    
+    <script>
+        // Hide loading screen once app loads
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.style.opacity = '0';
+                    loadingScreen.style.transition = 'opacity 0.3s ease-out';
+                    setTimeout(function() {
+                        loadingScreen.remove();
+                    }, 300);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
