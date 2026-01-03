@@ -147,7 +147,7 @@ const LanguageScreen: React.FC<{ navigation: Nav }> = ({ navigation }) => {
 
               <View style={[styles.buttonContainer, { gap: layout.isMobile ? theme.spacing.md : theme.spacing.lg }]}>
                 <Button
-                  title="Continue with Phone"
+                  title="login"
                   onPress={() => navigation.replace('Login')}
                   fullWidth
                   gradient

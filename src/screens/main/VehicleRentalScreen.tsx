@@ -1,135 +1,144 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
     View,
     Text,
-    StyleSheet,
-    ScrollView,
     TouchableOpacity,
-    Platform,
-    Alert,
-    useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types';
-import { Button, Input } from '../../components';
+import { Ionicons } from '@expo/vector-icons';
 import theme from '../../theme';
+import { Button } from '../../components/Button';
+import { Input } from '../../components/Input';
 
-type VehicleRentalNavigationProp = StackNavigationProp<RootStackParamList, 'VehicleRental'>;
+type Props = {
+    navigation: StackNavigationProp<any>;
+};
 
-interface Props {
-    navigation: VehicleRentalNavigationProp;
+interface VehicleOption {
+    id: string;
+    name: string;
+    price: number;
+    icon: string;
+    capacity: number;
+    features: string[];
 }
 
-type RentalType = 'hourly' | 'daily' | 'weekly';
+const vehicleOptions: VehicleOption[] = [
+    {
+        id: '1',
+        name: 'Economy Sedan',
+        price: 350,
+        icon: 'car',
+        capacity: 4,
+        features: ['Air Conditioning', 'Power Steering', 'ABS'],
+    },
+    {
+        id: '2',
+        name: 'SUV',
+        price: 380,
+        icon: 'car',
+        capacity: 5,
+        features: ['Air Conditioning', 'Sunroof', 'Climate Control'],
+    },
+    {
+        id: '3',
+        name: 'Hatchback',
+        price: 300,
+        icon: 'car',
+        capacity: 4,
+        features: ['Air Conditioning', 'Power Windows', 'Audio System'],
+    },
+    {
+        id: '4',
+        name: 'Premium Sedan',
+        price: 400,
+        icon: 'car',
+        capacity: 5,
+        features: ['Leather Seats', 'Panoramic Sunroof', 'Premium Sound'],
+    },
+];
 
 const VehicleRentalScreen: React.FC<Props> = ({ navigation }) => {
-    const { width } = useWindowDimensions();
-    const [rentalType, setRentalType] = useState<RentalType>('daily');
-    const [selectedVehicle, setSelectedVehicle] = useState<string>('');
-
-    const layout = useMemo(() => {
-        const isMobile = width < 640;
-        const isTablet = width >= 640 && width < 1024;
-
-        return {
-            isMobile,
-            isTablet,
-            padding: isMobile ? theme.spacing.lg : theme.spacing.xl,
-            sectionTitleSize: isMobile ? theme.fontSizes.lg : theme.fontSizes.lg,
-            vehicleGridColumns: isMobile ? 2 : isTablet ? 3 : 4,
-            vehicleCardPadding: isMobile ? theme.spacing.md : theme.spacing.lg,
-        };
-    }, [width]);
-    // Hourly rental inputs
-    const [hourlyStartDate, setHourlyStartDate] = useState('');
-    const [hourlyStartTime, setHourlyStartTime] = useState('');
-    const [hours, setHours] = useState<number>(4);
-
-    // Daily/Weekly rental inputs
-    const [rentalStartDate, setRentalStartDate] = useState('');
-    const [rentalEndDate, setRentalEndDate] = useState('');
+    const [selectedVehicle, setSelectedVehicle] = useState<string | null>(null);
+    const [rentalType, setRentalType] = useState<'hourly' | 'daily' | 'weekly'>('daily');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [hours, setHours] = useState(1);
     const [pickupLocation, setPickupLocation] = useState('');
 
-    const vehicleOptions = [
-        { id: 'sedan', name: 'Sedan (Honda City)', price: 599, icon: 'car' },
-        { id: 'suv', name: 'SUV (Mahindra Scorpio)', price: 899, icon: 'car-sport' },
-        { id: 'hatchback', name: 'Hatchback (Swift)', price: 449, icon: 'car-outline' },
-        { id: 'premium', name: 'Premium (Toyota Camry)', price: 1299, icon: 'car-sport-outline' },
-    ];
+    const getSelectedVehicleData = () => {
+        return vehicleOptions.find((v) => v.id === selectedVehicle);
+    };
 
-    const hourlyRate = selectedVehicle ? vehicleOptions.find(v => v.id === selectedVehicle)?.price || 0 : 0;
-    const dailyRate = selectedVehicle ? vehicleOptions.find(v => v.id === selectedVehicle)?.price || 0 : 0;
-    const weeklyRate = selectedVehicle ? (vehicleOptions.find(v => v.id === selectedVehicle)?.price || 0) * 6 : 0; // 10% discount for weekly
+    // Calculate prices based on hourly rate
+    const getHourlyPrice = (): number => {
+        const vehicle = getSelectedVehicleData();
+        return vehicle?.price || 0;
+    };
 
-    const totalHours = hours;
-    const totalDays = useMemo(() => {
-        if (rentalStartDate && rentalEndDate) {
-            const d1 = new Date(rentalStartDate);
-            const d2 = new Date(rentalEndDate);
-            const diff = Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
-            return diff;
-        }
-        return 1;
-    }, [rentalStartDate, rentalEndDate]);
+    const getDailyPrice = (): number => {
+        return getHourlyPrice() * 24; // 24 hours
+    };
 
-    const totalWeeks = Math.ceil(totalDays / 7);
+    const getWeeklyPrice = (): number => {
+        return getDailyPrice() * 6; // 6 days (1 day discount per week)
+    };
 
-    const calculateTotal = () => {
-        if (!selectedVehicle) return 0;
+    const calculateTotal = (): number => {
+        const vehicle = getSelectedVehicleData();
+        if (!vehicle) return 0;
 
-        switch (rentalType) {
-            case 'hourly':
-                return hourlyRate * totalHours;
-            case 'daily':
-                return dailyRate * totalDays;
-            case 'weekly':
-                return weeklyRate * totalWeeks;
-            default:
-                return 0;
+        if (rentalType === 'hourly') {
+            return getHourlyPrice() * hours;
+        } else if (rentalType === 'daily') {
+            return getDailyPrice();
+        } else {
+            return getWeeklyPrice();
         }
     };
 
     const handleBooking = () => {
-        if (!selectedVehicle) {
-            Alert.alert('Select Vehicle', 'Please select a vehicle type to continue.');
-            return;
-        }
-
-        if (rentalType === 'hourly' && (!hourlyStartDate || !hourlyStartTime)) {
-            Alert.alert('Missing Information', 'Please fill in start date and time for hourly rental.');
-            return;
-        }
-
-        if ((rentalType === 'daily' || rentalType === 'weekly') && (!rentalStartDate || !rentalEndDate || !pickupLocation)) {
-            Alert.alert('Missing Information', 'Please fill in all required fields.');
-            return;
-        }
-
-        Alert.alert(
-            'Booking Confirmed',
-            `Vehicle rental booked successfully!\nTotal: ₹${calculateTotal()}\n\nOur team will contact you shortly.`,
-            [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
+        if (!selectedVehicle) return;
+        console.log('Booking:', { selectedVehicle, rentalType, startDate, endDate });
+        // Navigate to confirmation or payment screen
     };
+
+    const selectedVehicleData = getSelectedVehicleData();
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <View style={[styles.header, { paddingHorizontal: layout.padding }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={layout.isMobile ? 20 : 24} color={theme.colors.text.primary} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { fontSize: layout.isMobile ? theme.fontSizes.lg : theme.fontSizes.xl }]}>Book Vehicle</Text>
-                    <View style={{ width: layout.isMobile ? 20 : 24 }} />
-                    <Text style={styles.sectionTitle}>Rental Type</Text>
-                    <View style={styles.typeSelector}>
+            <View style={styles.header}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Ionicons
+                        name="chevron-back"
+                        size={24}
+                        color={theme.colors.primary.main}
+                    />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Rent a Vehicle</Text>
+                <View style={{ width: 40 }} />
+            </View>
+
+            <ScrollView
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
+                {/* Rental Type Selector */}
+                <View style={styles.typeContainer}>
+                    <Text style={styles.containerLabel}>Rental Type</Text>
+                    <View style={styles.typeButtonGroup}>
                         {[
-                            { key: 'hourly', label: 'Hourly', icon: 'time-outline' },
-                            { key: 'daily', label: 'Daily', icon: 'calendar-outline' },
-                            { key: 'weekly', label: 'Weekly', icon: 'calendar' },
+                            { key: 'hourly', label: '⏱ Hourly', icon: 'time' },
+                            { key: 'daily', label: '📅 Daily', icon: 'calendar' },
+                            { key: 'weekly', label: '📦 Weekly', icon: 'calendar-outline' },
                         ].map((type) => (
                             <TouchableOpacity
                                 key={type.key}
@@ -137,13 +146,8 @@ const VehicleRentalScreen: React.FC<Props> = ({ navigation }) => {
                                     styles.typeButton,
                                     rentalType === type.key && styles.typeButtonActive,
                                 ]}
-                                onPress={() => setRentalType(type.key as RentalType)}
+                                onPress={() => setRentalType(type.key as any)}
                             >
-                                <Ionicons
-                                    name={type.icon as any}
-                                    size={20}
-                                    color={rentalType === type.key ? '#FFFFFF' : theme.colors.primary.main}
-                                />
                                 <Text
                                     style={[
                                         styles.typeButtonText,
@@ -157,10 +161,89 @@ const VehicleRentalScreen: React.FC<Props> = ({ navigation }) => {
                     </View>
                 </View>
 
+                {/* Rental Details Input */}
+                <View style={styles.inputContainer}>
+                    <Text style={styles.containerLabel}>When & Where</Text>
+                    {rentalType === 'hourly' ? (
+                        <>
+                            <View style={styles.inputRow}>
+                                <View style={styles.inputHalf}>
+                                    <Text style={styles.inputLabel}>Start Date</Text>
+                                    <Input
+                                        placeholder="DD/MM/YYYY"
+                                        value={startDate}
+                                        onChangeText={setStartDate}
+                                        style={styles.input}
+                                    />
+                                </View>
+                                <View style={styles.inputHalf}>
+                                    <Text style={styles.inputLabel}>Start Time</Text>
+                                    <Input
+                                        placeholder="HH:MM"
+                                        value={startTime}
+                                        onChangeText={setStartTime}
+                                        style={styles.input}
+                                    />
+                                </View>
+                            </View>
+                            <View style={styles.hourSelectorContainer}>
+                                <View style={styles.hourSelectorLabel}>
+                                    <Text style={styles.inputLabel}>Duration</Text>
+                                    <Text style={styles.hourValue}>{hours}h</Text>
+                                </View>
+                                <View style={styles.hourButtons}>
+                                    <TouchableOpacity
+                                        style={styles.hourBtn}
+                                        onPress={() => setHours(Math.max(1, hours - 1))}
+                                    >
+                                        <Ionicons name="remove" size={18} color={theme.colors.primary.main} />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.hourBtn}
+                                        onPress={() => setHours(Math.min(24, hours + 1))}
+                                    >
+                                        <Ionicons name="add" size={18} color={theme.colors.primary.main} />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </>
+                    ) : (
+                        <>
+                            <View style={styles.inputRow}>
+                                <View style={styles.inputHalf}>
+                                    <Text style={styles.inputLabel}>Start Date</Text>
+                                    <Input
+                                        placeholder="DD/MM/YYYY"
+                                        value={startDate}
+                                        onChangeText={setStartDate}
+                                        style={styles.input}
+                                    />
+                                </View>
+                                <View style={styles.inputHalf}>
+                                    <Text style={styles.inputLabel}>End Date</Text>
+                                    <Input
+                                        placeholder="DD/MM/YYYY"
+                                        value={endDate}
+                                        onChangeText={setEndDate}
+                                        style={styles.input}
+                                    />
+                                </View>
+                            </View>
+                        </>
+                    )}
+                    <Text style={styles.inputLabel}>Pickup Location</Text>
+                    <Input
+                        placeholder="Enter pickup location"
+                        value={pickupLocation}
+                        onChangeText={setPickupLocation}
+                        style={styles.input}
+                    />
+                </View>
+
                 {/* Vehicle Selection */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Select Vehicle</Text>
-                    <View style={styles.vehicleGrid}>
+                <View style={styles.vehicleContainer}>
+                    <Text style={styles.containerLabel}>Select Vehicle</Text>
+                    <View style={styles.vehicleStack}>
                         {vehicleOptions.map((vehicle) => (
                             <TouchableOpacity
                                 key={vehicle.id}
@@ -170,131 +253,110 @@ const VehicleRentalScreen: React.FC<Props> = ({ navigation }) => {
                                 ]}
                                 onPress={() => setSelectedVehicle(vehicle.id)}
                             >
-                                <Ionicons
-                                    name={vehicle.icon as any}
-                                    size={32}
-                                    color={selectedVehicle === vehicle.id ? '#FFFFFF' : theme.colors.primary.main}
-                                />
-                                <Text
-                                    style={[
-                                        styles.vehicleName,
-                                        selectedVehicle === vehicle.id && styles.vehicleNameSelected,
-                                    ]}
-                                >
-                                    {vehicle.name}
-                                </Text>
-                                <Text
-                                    style={[
-                                        styles.vehiclePrice,
-                                        selectedVehicle === vehicle.id && styles.vehiclePriceSelected,
-                                    ]}
-                                >
-                                    ₹{vehicle.price}/{rentalType === 'hourly' ? 'hr' : 'day'}
-                                </Text>
+                                {/* Vehicle Image Placeholder */}
+                                <View style={styles.vehicleImagePlaceholder}>
+                                    <Ionicons name="car" size={48} color={theme.colors.primary.main} />
+                                </View>
+
+                                {/* Vehicle Info */}
+                                <View style={styles.vehicleInfo}>
+                                    <View style={styles.vehicleHeader}>
+                                        <Text style={styles.vehicleName}>{vehicle.name}</Text>
+                                        <View style={styles.capacityBadge}>
+                                            <Ionicons name="people" size={14} color="#666" />
+                                            <Text style={styles.capacityText}>{vehicle.capacity}</Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Features */}
+                                    <View style={styles.featuresList}>
+                                        {vehicle.features.map((feature, idx) => (
+                                            <View key={idx} style={styles.featureItem}>
+                                                <Ionicons name="checkmark-circle" size={12} color={theme.colors.primary.main} />
+                                                <Text style={styles.featureText}>{feature}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+
+                                    {/* Price */}
+                                    <View style={styles.priceRow}>
+                                        <Text style={styles.priceLabel}>
+                                            ₹{vehicle.price}
+                                            <Text style={styles.priceUnit}>
+                                                /{rentalType === 'hourly' ? 'hr' : rentalType === 'daily' ? '/day' : '/week'}
+                                            </Text>
+                                        </Text>
+                                        <View
+                                            style={[
+                                                styles.selectCheckmark,
+                                                selectedVehicle === vehicle.id && styles.selectCheckmarkActive,
+                                            ]}
+                                        >
+                                            {selectedVehicle === vehicle.id && (
+                                                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                                            )}
+                                        </View>
+                                    </View>
+                                </View>
                             </TouchableOpacity>
                         ))}
                     </View>
                 </View>
 
-                {/* Booking Details */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Booking Details</Text>
-
-                    {rentalType === 'hourly' ? (
-                        <View style={styles.inputGroup}>
-                            <Input
-                                placeholder="Start Date (DD/MM/YYYY)"
-                                value={hourlyStartDate}
-                                onChangeText={setHourlyStartDate}
-                                style={styles.input}
-                            />
-                            <Input
-                                placeholder="Start Time (HH:MM)"
-                                value={hourlyStartTime}
-                                onChangeText={setHourlyStartTime}
-                                style={styles.input}
-                            />
-                            <View style={styles.hourSelector}>
-                                <Text style={styles.hourLabel}>Hours: {hours}</Text>
-                                <View style={styles.hourControls}>
-                                    <TouchableOpacity
-                                        style={styles.hourButton}
-                                        onPress={() => setHours(Math.max(1, hours - 1))}
-                                    >
-                                        <Ionicons name="remove" size={20} color={theme.colors.primary.main} />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={styles.hourButton}
-                                        onPress={() => setHours(Math.min(24, hours + 1))}
-                                    >
-                                        <Ionicons name="add" size={20} color={theme.colors.primary.main} />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    ) : (
-                        <View style={styles.inputGroup}>
-                            <Input
-                                placeholder="Pickup Date (DD/MM/YYYY)"
-                                value={rentalStartDate}
-                                onChangeText={setRentalStartDate}
-                                style={styles.input}
-                            />
-                            <Input
-                                placeholder="Return Date (DD/MM/YYYY)"
-                                value={rentalEndDate}
-                                onChangeText={setRentalEndDate}
-                                style={styles.input}
-                            />
-                            <Input
-                                placeholder="Pickup Location"
-                                value={pickupLocation}
-                                onChangeText={setPickupLocation}
-                                style={styles.input}
-                            />
-                        </View>
-                    )}
-                </View>
-
                 {/* Pricing Summary */}
-                {selectedVehicle && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Pricing Summary</Text>
+                {selectedVehicle && selectedVehicleData && (
+                    <View style={styles.summaryContainer}>
+                        <Text style={styles.containerLabel}>Pricing Summary</Text>
                         <View style={styles.summaryCard}>
                             <View style={styles.summaryRow}>
                                 <Text style={styles.summaryLabel}>
-                                    {rentalType === 'hourly' ? `Rate per hour:` : rentalType === 'daily' ? `Rate per day:` : `Rate per week:`}
+                                    {rentalType === 'hourly'
+                                        ? 'Rate per hour'
+                                        : rentalType === 'daily'
+                                            ? 'Rate per day'
+                                            : 'Rate per week'}
                                 </Text>
                                 <Text style={styles.summaryValue}>
-                                    ₹{rentalType === 'hourly' ? hourlyRate : rentalType === 'weekly' ? Math.round(weeklyRate / totalWeeks) : dailyRate}
+                                    ₹{rentalType === 'hourly' ? getHourlyPrice() : rentalType === 'daily' ? getDailyPrice() : getWeeklyPrice()}
                                 </Text>
                             </View>
                             <View style={styles.summaryRow}>
                                 <Text style={styles.summaryLabel}>
-                                    {rentalType === 'hourly' ? `Total hours:` : rentalType === 'daily' ? `Total days:` : `Total weeks:`}
+                                    {rentalType === 'hourly' ? 'Hours' : rentalType === 'daily' ? 'Days' : 'Weeks'}
                                 </Text>
                                 <Text style={styles.summaryValue}>
-                                    {rentalType === 'hourly' ? totalHours : rentalType === 'weekly' ? totalWeeks : totalDays}
+                                    {rentalType === 'hourly' ? hours : 1}
                                 </Text>
                             </View>
-                            <View style={[styles.summaryRow, styles.totalRow]}>
-                                <Text style={styles.totalLabel}>Total Amount:</Text>
+                            <View style={styles.divider} />
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>Total Amount</Text>
                                 <Text style={styles.totalValue}>₹{calculateTotal()}</Text>
                             </View>
                         </View>
                     </View>
                 )}
 
-                {/* Book Button */}
-                <View style={styles.buttonContainer}>
-                    <Button
-                        title="Book Vehicle"
-                        onPress={handleBooking}
-                        disabled={!selectedVehicle}
-                        style={styles.bookButton}
-                    />
-                </View>
+                {/* Spacing for fixed button */}
+                <View style={{ height: 80 }} />
             </ScrollView>
+
+            {/* Fixed Footer Button */}
+            {selectedVehicle && selectedVehicleData && (
+                <View style={styles.footerButtonContainer}>
+                    <View style={styles.footerContent}>
+                        <View>
+                            <Text style={styles.footerLabel}>Total</Text>
+                            <Text style={styles.footerPrice}>₹{calculateTotal()}</Text>
+                        </View>
+                        <Button
+                            title="Confirm Rental"
+                            onPress={handleBooking}
+                            style={styles.confirmButton}
+                        />
+                    </View>
+                </View>
+            )}
         </SafeAreaView>
     );
 };
@@ -304,15 +366,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: theme.colors.background.secondary,
     },
-    scrollView: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: theme.spacing.xl,
-        paddingVertical: theme.spacing.lg,
+        paddingHorizontal: theme.spacing.md,
+        paddingVertical: theme.spacing.md,
         backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: theme.colors.border.light,
@@ -322,116 +381,215 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: theme.fontSizes.xl,
-        fontWeight: theme.fontWeights.bold,
+        fontWeight: '600',
         color: theme.colors.text.primary,
     },
-    section: {
-        marginTop: theme.spacing.xl,
-        paddingHorizontal: theme.spacing.xl,
+    scrollView: {
+        flex: 1,
     },
-    sectionTitle: {
-        fontSize: theme.fontSizes.lg,
-        fontWeight: theme.fontWeights.semiBold,
+    scrollContent: {
+        paddingHorizontal: theme.spacing.lg,
+        paddingTop: theme.spacing.lg,
+        paddingBottom: theme.spacing.lg,
+    },
+
+    // Type Container Styles
+    typeContainer: {
+        marginBottom: theme.spacing.xl,
+    },
+    containerLabel: {
+        fontSize: theme.fontSizes.base,
+        fontWeight: '600',
         color: theme.colors.text.primary,
-        marginBottom: theme.spacing.lg,
+        marginBottom: theme.spacing.md,
     },
-    typeSelector: {
+    typeButtonGroup: {
         flexDirection: 'row',
         gap: theme.spacing.md,
     },
     typeButton: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: theme.spacing.md,
+        paddingVertical: theme.spacing.md,
+        paddingHorizontal: theme.spacing.base,
         borderRadius: theme.borderRadius.lg,
-        borderWidth: 1,
-        borderColor: theme.colors.primary.main,
-        backgroundColor: '#FFFFFF',
-        gap: theme.spacing.sm,
-    },
-    typeButtonActive: {
-        backgroundColor: theme.colors.primary.main,
-    },
-    typeButtonText: {
-        fontSize: theme.fontSizes.base,
-        fontWeight: theme.fontWeights.medium,
-        color: theme.colors.primary.main,
-    },
-    typeButtonTextActive: {
-        color: '#FFFFFF',
-    },
-    vehicleGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: theme.spacing.md,
-    },
-    vehicleCard: {
-        flex: 1,
-        minWidth: 140,
-        padding: theme.spacing.lg,
-        borderRadius: theme.borderRadius.lg,
-        borderWidth: 1,
+        borderWidth: 1.5,
         borderColor: theme.colors.border.light,
         backgroundColor: '#FFFFFF',
         alignItems: 'center',
-        ...theme.shadows.sm,
     },
-    vehicleCardSelected: {
+    typeButtonActive: {
         borderColor: theme.colors.primary.main,
-        backgroundColor: theme.colors.primary.main,
+        backgroundColor: `${theme.colors.primary.main}10`,
     },
-    vehicleName: {
+    typeButtonText: {
         fontSize: theme.fontSizes.sm,
-        fontWeight: theme.fontWeights.medium,
+        fontWeight: '500',
         color: theme.colors.text.primary,
-        textAlign: 'center',
-        marginTop: theme.spacing.sm,
     },
-    vehicleNameSelected: {
-        color: '#FFFFFF',
+    typeButtonTextActive: {
+        color: theme.colors.primary.main,
+        fontWeight: '600',
     },
-    vehiclePrice: {
-        fontSize: theme.fontSizes.xs,
-        color: theme.colors.text.secondary,
-        marginTop: theme.spacing.xs,
+
+    // Input Container Styles
+    inputContainer: {
+        marginBottom: theme.spacing.xl,
+        backgroundColor: '#FFFFFF',
+        borderRadius: theme.borderRadius.lg,
+        padding: theme.spacing.lg,
     },
-    vehiclePriceSelected: {
-        color: 'rgba(255, 255, 255, 0.9)',
-    },
-    inputGroup: {
-        gap: theme.spacing.md,
+    inputLabel: {
+        fontSize: theme.fontSizes.sm,
+        fontWeight: '500',
+        color: theme.colors.text.primary,
+        marginBottom: theme.spacing.sm,
     },
     input: {
         marginBottom: 0,
     },
-    hourSelector: {
+    inputRow: {
+        flexDirection: 'row',
+        gap: theme.spacing.md,
+        marginBottom: theme.spacing.md,
+    },
+    inputHalf: {
+        flex: 1,
+    },
+    hourSelectorContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: theme.spacing.md,
-        backgroundColor: '#FFFFFF',
-        borderRadius: theme.borderRadius.lg,
-        borderWidth: 1,
-        borderColor: theme.colors.border.light,
+        paddingVertical: theme.spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border.light,
+        marginTop: theme.spacing.md,
     },
-    hourLabel: {
-        fontSize: theme.fontSizes.base,
-        fontWeight: theme.fontWeights.medium,
-        color: theme.colors.text.primary,
+    hourSelectorLabel: {
+        flex: 1,
     },
-    hourControls: {
+    hourValue: {
+        fontSize: theme.fontSizes.lg,
+        fontWeight: '600',
+        color: theme.colors.primary.main,
+        marginTop: theme.spacing.xs,
+    },
+    hourButtons: {
         flexDirection: 'row',
         gap: theme.spacing.sm,
     },
-    hourButton: {
-        width: 32,
-        height: 32,
+    hourBtn: {
+        width: 40,
+        height: 40,
         borderRadius: theme.borderRadius.full,
         backgroundColor: `${theme.colors.primary.main}15`,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+
+    // Vehicle Container Styles
+    vehicleContainer: {
+        marginBottom: theme.spacing.xl,
+    },
+    vehicleStack: {
+        gap: theme.spacing.md,
+    },
+    vehicleCard: {
+        flexDirection: 'row',
+        backgroundColor: '#FFFFFF',
+        borderRadius: theme.borderRadius.lg,
+        overflow: 'hidden',
+        borderWidth: 1.5,
+        borderColor: theme.colors.border.light,
+        ...theme.shadows.md,
+    },
+    vehicleCardSelected: {
+        borderColor: theme.colors.primary.main,
+        backgroundColor: `${theme.colors.primary.main}05`,
+    },
+    vehicleImagePlaceholder: {
+        width: 100,
+        height: 100,
+        backgroundColor: `${theme.colors.primary.main}15`,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRightWidth: 1,
+        borderRightColor: theme.colors.border.light,
+    },
+    vehicleInfo: {
+        flex: 1,
+        padding: theme.spacing.md,
+        justifyContent: 'space-between',
+    },
+    vehicleHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: theme.spacing.sm,
+    },
+    vehicleName: {
+        fontSize: theme.fontSizes.base,
+        fontWeight: '600',
+        color: theme.colors.text.primary,
+        flex: 1,
+    },
+    capacityBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: theme.spacing.sm,
+        paddingVertical: 4,
+        backgroundColor: '#F5F5F5',
+        borderRadius: theme.borderRadius.full,
+    },
+    capacityText: {
+        fontSize: theme.fontSizes.xs,
+        color: '#666',
+        fontWeight: '500',
+    },
+    featuresList: {
+        marginBottom: theme.spacing.sm,
+    },
+    featureItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 4,
+    },
+    featureText: {
+        fontSize: theme.fontSizes.xs,
+        color: theme.colors.text.secondary,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    priceLabel: {
+        fontSize: theme.fontSizes.base,
+        fontWeight: '600',
+        color: theme.colors.primary.main,
+    },
+    priceUnit: {
+        fontSize: theme.fontSizes.sm,
+        fontWeight: '400',
+    },
+    selectCheckmark: {
+        width: 24,
+        height: 24,
+        borderRadius: theme.borderRadius.full,
+        borderWidth: 2,
+        borderColor: theme.colors.border.light,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    selectCheckmarkActive: {
+        backgroundColor: theme.colors.primary.main,
+        borderColor: theme.colors.primary.main,
+    },
+
+    // Summary Container Styles
+    summaryContainer: {
+        marginBottom: theme.spacing.xl,
     },
     summaryCard: {
         backgroundColor: '#FFFFFF',
@@ -445,38 +603,70 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: theme.spacing.sm,
+        paddingVertical: theme.spacing.md,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: theme.colors.border.light,
+        marginVertical: theme.spacing.sm,
     },
     summaryLabel: {
-        fontSize: theme.fontSizes.base,
+        fontSize: theme.fontSizes.sm,
         color: theme.colors.text.secondary,
     },
     summaryValue: {
         fontSize: theme.fontSizes.base,
-        fontWeight: theme.fontWeights.medium,
+        fontWeight: '600',
         color: theme.colors.text.primary,
     },
     totalRow: {
+        marginTop: theme.spacing.md,
+        paddingTop: theme.spacing.md,
         borderTopWidth: 1,
         borderTopColor: theme.colors.border.light,
-        marginTop: theme.spacing.sm,
-        paddingTop: theme.spacing.md,
     },
     totalLabel: {
-        fontSize: theme.fontSizes.lg,
-        fontWeight: theme.fontWeights.bold,
+        fontSize: theme.fontSizes.base,
+        fontWeight: '600',
         color: theme.colors.text.primary,
     },
     totalValue: {
-        fontSize: theme.fontSizes.lg,
-        fontWeight: theme.fontWeights.bold,
+        fontSize: theme.fontSizes.xl,
+        fontWeight: '700',
         color: theme.colors.primary.main,
     },
-    buttonContainer: {
-        padding: theme.spacing.xl,
-        paddingBottom: theme.spacing['2xl'],
+
+    // Footer Button Styles
+    footerButtonContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFFFFF',
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border.light,
+        paddingHorizontal: theme.spacing.lg,
+        paddingVertical: theme.spacing.md,
+        paddingBottom: theme.spacing.xl,
+        ...theme.shadows.lg,
     },
-    bookButton: {
+    footerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: theme.spacing.md,
+    },
+    footerLabel: {
+        fontSize: theme.fontSizes.sm,
+        color: theme.colors.text.secondary,
+    },
+    footerPrice: {
+        fontSize: theme.fontSizes.xl,
+        fontWeight: '700',
+        color: theme.colors.primary.main,
+    },
+    confirmButton: {
+        minWidth: 160,
         marginBottom: 0,
     },
 });
