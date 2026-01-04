@@ -148,7 +148,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       key: 'vehicle',
-      title: 'Book Vehicle',
+      title: 'Rental Vehicle',
       subtitle: 'Rent by hour/day',
       icon: <Ionicons name="car-sport" size={32} color={theme.colors.services.vehicle} />,
       onPress: () => navigation.navigate('VehicleRental'),
@@ -156,7 +156,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       key: 'intercity',
-      title: 'Intercity (from TS)',
+      title: 'Intercity',
       subtitle: 'Start in Telangana',
       icon: <Ionicons name="navigate" size={32} color={theme.colors.services.intercity} />,
       onPress: () => showComingSoon('Intercity Bookings', 'Book trips across Telangana and neighboring states'),
@@ -164,7 +164,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       key: 'parcel',
-      title: 'Parcel (TS only)',
+      title: 'Parcel',
       subtitle: 'Hyderabad same-day',
       icon: <Ionicons name="cube" size={32} color={theme.colors.services.parcel} />,
       onPress: () => showComingSoon('Parcel Delivery', 'Fast and reliable parcel delivery service'),
@@ -245,206 +245,198 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={Platform.OS !== 'web'}
+        scrollEnabled={true}
+        nestedScrollEnabled={true}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + theme.spacing['2xl'] },
         ]}
-        scrollEnabled={true}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled={true}
         overScrollMode={isWeb ? 'auto' : 'always'}
       >
         {/* Enhanced Header with better mobile/desktop layout */}
-        <View style={[styles.header, layout.page, layout.isDesktop && styles.desktopHeader]}>
-          <View style={styles.logoContainer}>
-            <Ionicons
-              name="car-sport"
-              size={layout.isMobile ? 28 : layout.isDesktop ? 32 : 30}
-              color={theme.colors.primary.main}
-            />
-            <Text style={[styles.logoText, layout.isDesktop && styles.desktopLogoText]}>
-              Telangana Yatri
-            </Text>
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={[styles.notificationButton, layout.isDesktop && styles.desktopNotificationButton]}>
-              <Ionicons
-                name="notifications-outline"
-                size={layout.isMobile ? 24 : 26}
-                color={theme.colors.text.primary}
-              />
-            </TouchableOpacity>
-            {layout.isDesktop && (
-              <TouchableOpacity style={styles.profileButton}>
-                <Ionicons name="person-circle-outline" size={28} color={theme.colors.primary.main} />
-              </TouchableOpacity>
-            )}
-          </View>
+      <View style={[styles.header, layout.page, layout.isDesktop && styles.desktopHeader]}>
+        <View style={styles.logoContainer}>
+          <Ionicons
+            name="car-sport"
+            size={layout.isMobile ? 28 : layout.isDesktop ? 32 : 30}
+            color={theme.colors.primary.main} />
+          <Text style={[styles.logoText, layout.isDesktop && styles.desktopLogoText]}>
+            Telangana Yatri
+          </Text>
         </View>
-
-        {/* Enhanced Welcome Section */}
-        <View style={[styles.welcomeSection, layout.page, layout.isDesktop && styles.desktopWelcomeSection]}>
-          <Text style={[styles.welcomeText, layout.isDesktop && styles.desktopWelcomeText]}>
-            Welcome back
-          </Text>
-          <Text style={[styles.userNameText, layout.isDesktop && styles.desktopUserNameText]}>
-            {profile?.name || 'Guest'}
-          </Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={[styles.notificationButton, layout.isDesktop && styles.desktopNotificationButton]}>
+            <Ionicons
+              name="notifications-outline"
+              size={layout.isMobile ? 24 : 26}
+              color={theme.colors.text.primary} />
+          </TouchableOpacity>
           {layout.isDesktop && (
-            <Text style={styles.desktopWelcomeSubtitle}>
-              Ready to explore Telangana? Book your ride now.
-            </Text>
+            <TouchableOpacity style={styles.profileButton}>
+              <Ionicons name="person-circle-outline" size={28} color={theme.colors.primary.main} />
+            </TouchableOpacity>
           )}
         </View>
+      </View>
 
-        {/* Enhanced Primary CTA - Book a Ride */}
-        <TouchableOpacity onPress={() => navigation.navigate('RideBooking')}>
-          <LinearGradient
-            colors={[theme.colors.primary.main, theme.colors.primary.light]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[
-              styles.primaryCTA,
-              layout.page,
-              layout.isDesktop && styles.desktopPrimaryCTA,
-              isWeb && { marginTop: theme.spacing.lg }
-            ]}
-          >
-            <View style={[styles.ctaContent, layout.isDesktop && styles.desktopCtaContent]}>
-              <View style={styles.ctaTextContainer}>
-                <Text style={[styles.ctaTitle, layout.isDesktop && styles.desktopCtaTitle]}>
-                  Book a Hyderabad ride
-                </Text>
-                <Text style={[styles.ctaSubtitle, layout.isDesktop && styles.desktopCtaSubtitle]}>
-                  Telangana-only · City default: Hyderabad
-                </Text>
-                <View style={[styles.ctaFeatures, layout.isDesktop && styles.desktopCtaFeatures]}>
-                  <Text style={[styles.ctaFeature, layout.isDesktop && styles.desktopCtaFeature]}>🚗 Instant pickup</Text>
-                  <Text style={[styles.ctaFeature, layout.isDesktop && styles.desktopCtaFeature]}>🛡️ Verified drivers</Text>
-                  <Text style={[styles.ctaFeature, layout.isDesktop && styles.desktopCtaFeature]}>📍 Live tracking</Text>
-                </View>
-              </View>
-              <View style={[styles.ctaIcon, layout.isDesktop && styles.desktopCtaIcon]}>
-                <Ionicons
-                  name="arrow-forward"
-                  size={layout.isMobile ? 24 : 28}
-                  color="#FFFFFF"
-                />
+      {/* Enhanced Welcome Section */}
+      <View style={[styles.welcomeSection, layout.page, layout.isDesktop && styles.desktopWelcomeSection]}>
+        <Text style={[styles.welcomeText, layout.isDesktop && styles.desktopWelcomeText]}>
+          Welcome back
+        </Text>
+        <Text style={[styles.userNameText, layout.isDesktop && styles.desktopUserNameText]}>
+          {profile?.name || 'Guest'}
+        </Text>
+        {layout.isDesktop && (
+          <Text style={styles.desktopWelcomeSubtitle}>
+            Ready to explore Telangana? Book your ride now.
+          </Text>
+        )}
+      </View>
+
+      {/* Enhanced Primary CTA - Book a Ride */}
+      <TouchableOpacity onPress={() => navigation.navigate('RideBooking')}>
+        <LinearGradient
+          colors={[theme.colors.primary.main, theme.colors.primary.light]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[
+            styles.primaryCTA,
+            layout.page,
+            layout.isDesktop && styles.desktopPrimaryCTA,
+            isWeb && { marginTop: theme.spacing.lg }
+          ]}
+        >
+          <View style={[styles.ctaContent, layout.isDesktop && styles.desktopCtaContent]}>
+            <View style={styles.ctaTextContainer}>
+              <Text style={[styles.ctaTitle, layout.isDesktop && styles.desktopCtaTitle]}>
+                Book a Hyderabad ride
+              </Text>
+              <Text style={[styles.ctaSubtitle, layout.isDesktop && styles.desktopCtaSubtitle]}>
+                Telangana-only · City default: Hyderabad
+              </Text>
+              <View style={[styles.ctaFeatures, layout.isDesktop && styles.desktopCtaFeatures]}>
+                <Text style={[styles.ctaFeature, layout.isDesktop && styles.desktopCtaFeature]}>🚗 Instant pickup</Text>
+                <Text style={[styles.ctaFeature, layout.isDesktop && styles.desktopCtaFeature]}>🛡️ Verified drivers</Text>
+                <Text style={[styles.ctaFeature, layout.isDesktop && styles.desktopCtaFeature]}>📍 Live tracking</Text>
               </View>
             </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Enhanced Services Grid */}
-        <View style={[
-          styles.section,
-          styles.servicesSection,
-          layout.page,
-          { paddingHorizontal: layout.sectionPadding },
-          layout.isDesktop && styles.desktopServicesSection
-        ]}>
-          <Text style={[styles.sectionTitle, layout.isDesktop && styles.desktopSectionTitle]}>
-            Our Services (Telangana)
-          </Text>
-          <Text style={[styles.sectionSubtitle, layout.isDesktop && styles.desktopSectionSubtitle]}>
-            City default: Hyderabad · TS only
-          </Text>
-
-          <FlatList
-            data={services.slice(0, layout.isLargeDesktop ? 10 : 8)}
-            keyExtractor={(s) => s.key}
-            numColumns={layout.serviceColumns}
-            scrollEnabled={false}
-            columnWrapperStyle={{
-              justifyContent: layout.serviceColumns === 2 ? 'space-between' : 'flex-start'
-            }}
-            ItemSeparatorComponent={() => <View style={{ height: layout.gap }} />}
-            contentContainerStyle={{ paddingBottom: layout.gap }}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View style={{ width: layout.serviceCardWidth }}>
-                <ServiceCard
-                  title={item.title}
-                  square
-                  centerContent
-                  hideSubtitle
-                  icon={item.icon}
-                  onPress={item.onPress}
-                  color={item.color}
-                  gradient={item.gradient}
-                  badge={item.badge}
-                  featured={item.featured}
-                  compact={layout.compact}
-                />
-              </View>
-            )}
-          />
-        </View>
-
-        {/* Tour Hyderabad */}
-        <View style={[styles.section, layout.page]}>
-          <Text style={styles.sectionTitle}>Tour Hyderabad</Text>
-          <Text style={styles.sectionSubtitle}>Hyperlocal curation · Telugu & Urdu friendly guides</Text>
-          <View style={styles.quickList}>
-            {hyderabadTours.map((item, index) => (
-              <QuickCard key={index} item={item} />
-            ))}
+            <View style={[styles.ctaIcon, layout.isDesktop && styles.desktopCtaIcon]}>
+              <Ionicons
+                name="arrow-forward"
+                size={layout.isMobile ? 24 : 28}
+                color="#FFFFFF" />
+            </View>
           </View>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {/* Enhanced Services Grid */}
+      <View style={[
+        styles.section,
+        styles.servicesSection,
+        layout.page,
+        { paddingHorizontal: layout.sectionPadding },
+        layout.isDesktop && styles.desktopServicesSection
+      ]}>
+        <Text style={[styles.sectionTitle, layout.isDesktop && styles.desktopSectionTitle]}>
+          Our Services (Telangana)
+        </Text>
+        <Text style={[styles.sectionSubtitle, layout.isDesktop && styles.desktopSectionSubtitle]}>
+          City default: Hyderabad · TS only
+        </Text>
+
+        <FlatList
+          data={services.slice(0, layout.isLargeDesktop ? 10 : 8)}
+          keyExtractor={(s) => s.key}
+          numColumns={layout.serviceColumns}
+          scrollEnabled={false}
+          columnWrapperStyle={{
+            justifyContent: layout.serviceColumns === 2 ? 'space-between' : 'flex-start'
+          }}
+          ItemSeparatorComponent={() => <View style={{ height: layout.gap }} />}
+          contentContainerStyle={{ paddingBottom: layout.gap }}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={{ width: layout.serviceCardWidth }}>
+              <ServiceCard
+                title={item.title}
+                square
+                centerContent
+                hideSubtitle
+                icon={item.icon}
+                onPress={item.onPress}
+                color={item.color}
+                gradient={item.gradient}
+                badge={item.badge}
+                featured={item.featured}
+                compact={layout.compact} />
+            </View>
+          )} />
+      </View>
+
+      {/* Tour Hyderabad */}
+      <View style={[styles.section, layout.page]}>
+        <Text style={styles.sectionTitle}>Tour Hyderabad</Text>
+        <Text style={styles.sectionSubtitle}>Hyperlocal curation · Telugu & Urdu friendly guides</Text>
+        <View style={styles.quickList}>
+          {hyderabadTours.map((item, index) => (
+            <QuickCard key={index} item={item} />
+          ))}
         </View>
+      </View>
 
-        {/* Airport & Metro */}
-        <View style={[styles.section, layout.page]}>
-          <Text style={styles.sectionTitle}>Airport & Metro</Text>
-          <Text style={styles.sectionSubtitle}>RGIA + TSRTC Pushpak · Metro feeder pickups</Text>
-          <View style={styles.quickList}>
-            {airportMetro.map((item, index) => (
-              <QuickCard key={index} item={item} badge="HYD" />
-            ))}
-          </View>
+      {/* Airport & Metro */}
+      <View style={[styles.section, layout.page]}>
+        <Text style={styles.sectionTitle}>Airport & Metro</Text>
+        <Text style={styles.sectionSubtitle}>RGIA + TSRTC Pushpak · Metro feeder pickups</Text>
+        <View style={styles.quickList}>
+          {airportMetro.map((item, index) => (
+            <QuickCard key={index} item={item} badge="HYD" />
+          ))}
         </View>
+      </View>
 
-        {/* Safety Features */}
-        <View style={[styles.section, layout.page]}>
-          <Text style={styles.sectionTitle}>Safety Features</Text>
-          <View
-            style={[
-              styles.safetyGrid,
-              { columnGap: layout.gap, rowGap: layout.gap },
-            ]}
-          >
-            {safetyFeatures.map((feature) => (
-              <SafetyFeature
-                key={feature.title}
-                icon={feature.icon}
-                title={feature.title}
-                color={feature.color}
-                width={layout.featureWidth}
-              />
-            ))}
-          </View>
+      {/* Safety Features */}
+      <View style={[styles.section, layout.page]}>
+        <Text style={styles.sectionTitle}>Safety Features</Text>
+        <View
+          style={[
+            styles.safetyGrid,
+            { columnGap: layout.gap, rowGap: layout.gap },
+          ]}
+        >
+          {safetyFeatures.map((feature) => (
+            <SafetyFeature
+              key={feature.title}
+              icon={feature.icon}
+              title={feature.title}
+              color={feature.color}
+              width={layout.featureWidth} />
+          ))}
         </View>
+      </View>
 
-        {/* Location Picker Section */}
-        <View style={[styles.locationSection, layout.page]}>
-          <LocationPicker
-            onLocationSelect={(location) => {
-              setSelectedLocation(location);
-              console.log('Location selected:', location);
-            }}
-            showMap={true}
-          />
-        </View>
+      {/* Location Picker Section */}
+      <View style={[styles.locationSection, layout.page]}>
+        <LocationPicker
+          onLocationSelect={(location) => {
+            setSelectedLocation(location);
+            console.log('Location selected:', location);
+          } }
+          showMap={true} />
+      </View>
 
-        {/* Bottom padding handled via SafeArea insets above */}
-      </ScrollView>
-
+      {/* Bottom padding handled via SafeArea insets above */}
       <ComingSoonModal
         visible={comingSoonModalVisible}
         title={comingSoonData.title}
         subtitle={comingSoonData.subtitle}
         onClose={() => setComingSoonModalVisible(false)}
       />
+      </ScrollView>
     </SafeAreaView>
   );
 };

@@ -108,8 +108,7 @@ const RideBookingScreen: React.FC<Props> = ({ navigation }) => {
   const [dropAddress, setDropAddress] = useState('');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedVehiclePrice, setSelectedVehiclePrice] = useState<number>(0);
-  const [isBooking, setIsBooking] = useState(false);
-
+  const [isBooking, setIsBooking] = useState(false);  const { addBooking } = useAppState();
   const { selectedCabType, setSelectedCabType } = useAppState();
 
   // Calculate distance between pickup and drop (mock)
@@ -154,12 +153,25 @@ const RideBookingScreen: React.FC<Props> = ({ navigation }) => {
 
     setIsBooking(true);
     try {
+      const selectedVehicle = vehicleTypes.find(v => v.id === selectedVehicleId);
+      
+      // Save booking to app state
+      await addBooking({
+        type: 'ride',
+        status: 'active',
+        vehicleName: selectedVehicle?.name || 'Vehicle',
+        pickupAddress,
+        dropAddress,
+        price: selectedVehiclePrice,
+        distance,
+      });
+
       // Simulate booking process
       setTimeout(() => {
         setIsBooking(false);
-        // Navigate to confirmation
-        navigation.navigate('RideTracking' as any);
-      }, 2000);
+        // Navigate to bookings screen to show the booking
+        navigation.navigate('Main', { screen: 'Bookings' } as any);
+      }, 1500);
     } catch (error) {
       setIsBooking(false);
       console.error('Booking error:', error);

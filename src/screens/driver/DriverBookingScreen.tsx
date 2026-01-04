@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types';
-import { Button, Input } from '../../components';
+import { Button, Input, DatePicker } from '../../components';
 import theme from '../../theme';
 
 type DriverBookingNavigationProp = StackNavigationProp<RootStackParamList, 'DriverBooking'>;
@@ -164,11 +164,10 @@ const DriverBookingScreen: React.FC<Props> = ({ navigation }) => {
               {bookingType === 'hourly' ? (
                 <>
                   <FormGroup label="Start Date" required>
-                    <Input
-                      placeholder="Select date (YYYY-MM-DD)"
+                    <DatePicker
                       value={hourlyStartDate}
-                      onChangeText={setHourlyStartDate}
-                      leftIcon={<Ionicons name="calendar-outline" size={20} color={theme.colors.primary.main} />}
+                      onChange={setHourlyStartDate}
+                      placeholder="Select start date"
                     />
                   </FormGroup>
 
@@ -213,20 +212,18 @@ const DriverBookingScreen: React.FC<Props> = ({ navigation }) => {
               ) : (
                 <>
                   <FormGroup label="Start Date" required>
-                    <Input
-                      placeholder="Select start date"
+                    <DatePicker
                       value={outStartDate}
-                      onChangeText={setOutStartDate}
-                      leftIcon={<Ionicons name="calendar-outline" size={20} color={theme.colors.primary.main} />}
+                      onChange={setOutStartDate}
+                      placeholder="Select start date"
                     />
                   </FormGroup>
 
                   <FormGroup label="End Date" required>
-                    <Input
-                      placeholder="Select end date"
+                    <DatePicker
                       value={outEndDate}
-                      onChangeText={setOutEndDate}
-                      leftIcon={<Ionicons name="calendar-outline" size={20} color={theme.colors.primary.main} />}
+                      onChange={setOutEndDate}
+                      placeholder="Select end date"
                     />
                   </FormGroup>
 

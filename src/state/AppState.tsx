@@ -3,6 +3,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RoleKey = 'customer' | 'cityDriver' | 'intercityDriver' | 'logistics';
 
+export interface Booking {
+  id: string;
+  type: 'ride' | 'driver' | 'vehicle' | 'tour';
+  status: 'active' | 'completed' | 'cancelled';
+  vehicleName: string;
+  pickupAddress: string;
+  dropAddress?: string;
+  price: number;
+  distance?: number;
+  date: string;
+  time: string;
+}
+
 interface AppState {
   language: 'en' | 'te' | 'ur';
   setLanguage: (l: 'en' | 'te' | 'ur') => void;
@@ -21,6 +34,12 @@ interface AppState {
   verified: Record<RoleKey, boolean>;
   verifyRole: (r: RoleKey) => void;
   logout: () => void;
+  // bookings
+  bookings: Booking[];
+  addBooking: (booking: Omit<Booking, 'id' | 'date' | 'time'>) => Promise<void>;
+  updateBookingStatus: (bookingId: string, status: 'active' | 'completed' | 'cancelled') => Promise<void>;
+  // activities (completed bookings)
+  activities: Booking[];
 }
 
 const Ctx = createContext<AppState | undefined>(undefined);
@@ -31,6 +50,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [profile, setProfileState] = useState<{ name?: string; gender?: 'male' | 'female' | 'other' }>({});
   const [token, setTokenState] = useState<string | undefined>(undefined);
   const [selectedCabType, setSelectedCabTypeState] = useState<string | undefined>(undefined);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [verified, setVerified] = useState<Record<RoleKey, boolean>>({
     customer: false,
     cityDriver: false,
@@ -41,19 +61,24 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const STORAGE_KEYS = {
     token: 'TY_AUTH_TOKEN',
     profile: 'TY_USER_PROFILE',
+    bookings: 'TY_BOOKINGS',
   };
 
   // Load persisted auth/profile on mount
   useEffect(() => {
     (async () => {
       try {
-        const [storedToken, storedProfile] = await Promise.all([
+        const [storedToken, storedProfile, storedBookings] = await Promise.all([
           AsyncStorage.getItem(STORAGE_KEYS.token),
           AsyncStorage.getItem(STORAGE_KEYS.profile),
+          AsyncStorage.getItem(STORAGE_KEYS.bookings),
         ]);
         if (storedToken) setTokenState(storedToken);
         if (storedProfile) {
           setProfileState(JSON.parse(storedProfile));
+        }
+        if (storedBookings) {
+          setBookings(JSON.parse(storedBookings));
         }
       } catch (err) {
         // ignore
@@ -92,6 +117,42 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setSelectedCabType = (t?: string) => {
     setSelectedCabTypeState(t);
   };
+
+  const addBooking = async (booking: Omit<Booking, 'id' | 'date' | 'time'>) => {
+    const newBooking: Booking = {
+      ...booking,
+      id: `booking_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    
+    const updatedBookings = [newBooking, ...bookings];
+    setBookings(updatedBookings);
+    
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(updatedBookings));
+    } catch (err) {
+      console.warn('Failed to persist bookings', err);
+    }
+  };
+
+  const updateBookingStatus = async (bookingId: string, status: 'active' | 'completed' | 'cancelled') => {
+    const updatedBookings = bookings.map(booking => 
+      booking.id === bookingId ? { ...booking, status } : booking
+    );
+    setBookings(updatedBookings);
+    
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.bookings, JSON.stringify(updatedBookings));
+    } catch (err) {
+      console.warn('Failed to update booking status', err);
+    }
+  };
+
+  const activities = useMemo(() => {
+    return bookings.filter(booking => booking.status === 'completed');
+  }, [bookings]);
+
   const logout = useCallback(async () => {
     setPhone(undefined);
     setProfileState({});
@@ -130,8 +191,12 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       verified,
       verifyRole,
       logout,
+      bookings,
+      addBooking,
+      updateBookingStatus,
+      activities,
     }),
-    [language, phone, profile, token, isProfileComplete, selectedCabType, verified, logout]
+    [language, phone, profile, token, isProfileComplete, selectedCabType, verified, logout, bookings, activities]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

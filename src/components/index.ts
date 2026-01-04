@@ -10,3 +10,4 @@ export { default as RideMapView } from './RideMapView';
 export { default as LocationSelector } from './LocationSelector';
 export { default as VehicleSelector } from './VehicleSelector';
 export { default as ComingSoonModal } from './ComingSoonModal';
+export { DatePicker } from './DatePicker';
