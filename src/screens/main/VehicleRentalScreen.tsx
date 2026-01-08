@@ -198,7 +198,7 @@ const VehicleRentalScreen: React.FC<Props> = ({ navigation }) => {
                     <View style={styles.categoryContainer}>
                         <CategoryCard
                             icon="car-outline"
-                            title="Rent a Vehicle"
+                            title="4-Wheel Vehicles"
                             subtitle="Cars & SUVs"
                             description="4-5 seater vehicles for comfortable travel"
                             color={theme.colors.primary.main}
@@ -206,7 +206,7 @@ const VehicleRentalScreen: React.FC<Props> = ({ navigation }) => {
                         />
                         <CategoryCard
                             icon="bicycle-outline"
-                            title="Rent a Bike"
+                            title="2-Wheel Vehicles"
                             subtitle="Bikes & Scooters"
                             description="Fast and eco-friendly options"
                             color={theme.colors.accent.main}

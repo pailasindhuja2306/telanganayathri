@@ -35,6 +35,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [comingSoonModalVisible, setComingSoonModalVisible] = useState(false);
   const [comingSoonData, setComingSoonData] = useState({ title: '', subtitle: '' });
+  const [showAllServices, setShowAllServices] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const showComingSoon = (title: string, subtitle: string) => {
@@ -148,7 +149,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       key: 'vehicle',
-      title: 'Rental Vehicle',
+      title: 'Self-Driving',
       subtitle: 'Rent by hour/day',
       icon: <Ionicons name="car-sport" size={32} color={theme.colors.services.vehicle} />,
       onPress: () => navigation.navigate('VehicleRental'),
@@ -260,7 +261,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.logoContainer}>
           <Ionicons
             name="car-sport"
-            size={layout.isMobile ? 28 : layout.isDesktop ? 32 : 30}
+            size={layout.isMobile ? 28 : layout.isDesktop ? 36 : 30}
             color={theme.colors.primary.main} />
           <Text style={[styles.logoText, layout.isDesktop && styles.desktopLogoText]}>
             Telangana Yatri
@@ -270,30 +271,55 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity style={[styles.notificationButton, layout.isDesktop && styles.desktopNotificationButton]}>
             <Ionicons
               name="notifications-outline"
-              size={layout.isMobile ? 24 : 26}
+              size={layout.isMobile ? 24 : 28}
               color={theme.colors.text.primary} />
           </TouchableOpacity>
           {layout.isDesktop && (
             <TouchableOpacity style={styles.profileButton}>
-              <Ionicons name="person-circle-outline" size={28} color={theme.colors.primary.main} />
+              <Ionicons name="person-circle-outline" size={32} color={theme.colors.primary.main} />
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      {/* Enhanced Welcome Section */}
+      {/* Enhanced Welcome Section - Two Column Layout for Desktop */}
       <View style={[styles.welcomeSection, layout.page, layout.isDesktop && styles.desktopWelcomeSection]}>
-        <Text style={[styles.welcomeText, layout.isDesktop && styles.desktopWelcomeText]}>
-          Welcome back
-        </Text>
-        <Text style={[styles.userNameText, layout.isDesktop && styles.desktopUserNameText]}>
-          {profile?.name || 'Guest'}
-        </Text>
-        {layout.isDesktop && (
-          <Text style={styles.desktopWelcomeSubtitle}>
-            Ready to explore Telangana? Book your ride now.
-          </Text>
-        )}
+        <View style={layout.isDesktop ? styles.desktopWelcomeContent : undefined}>
+          <View style={layout.isDesktop ? styles.desktopWelcomeLeft : undefined}>
+            <Text style={[styles.welcomeText, layout.isDesktop && styles.desktopWelcomeText]}>
+              Welcome back
+            </Text>
+            <Text style={[styles.userNameText, layout.isDesktop && styles.desktopUserNameText]}>
+              {profile?.name || 'Guest'}
+            </Text>
+            {layout.isDesktop && (
+              <Text style={styles.desktopWelcomeSubtitle}>
+                Ready to explore Telangana? Book your ride now.
+              </Text>
+            )}
+          </View>
+          
+          {/* Desktop Quick Stats */}
+          {layout.isDesktop && (
+            <View style={styles.desktopQuickStats}>
+              <View style={styles.statCard}>
+                <Ionicons name="time-outline" size={24} color={theme.colors.primary.main} />
+                <Text style={styles.statValue}>24/7</Text>
+                <Text style={styles.statLabel}>Available</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons name="shield-checkmark-outline" size={24} color={theme.colors.success} />
+                <Text style={styles.statValue}>100%</Text>
+                <Text style={styles.statLabel}>Verified</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Ionicons name="star" size={24} color="#FFD700" />
+                <Text style={styles.statValue}>4.8</Text>
+                <Text style={styles.statLabel}>Rating</Text>
+              </View>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Enhanced Primary CTA - Book a Ride */}
@@ -301,7 +327,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         <LinearGradient
           colors={[theme.colors.primary.main, theme.colors.primary.light]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={[
             styles.primaryCTA,
             layout.page,
@@ -310,7 +336,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           ]}
         >
           <View style={[styles.ctaContent, layout.isDesktop && styles.desktopCtaContent]}>
-            <View style={styles.ctaTextContainer}>
+            <View style={[styles.ctaTextContainer, layout.isDesktop && styles.desktopCtaTextContainer]}>
               <Text style={[styles.ctaTitle, layout.isDesktop && styles.desktopCtaTitle]}>
                 Book a Hyderabad ride
               </Text>
@@ -323,17 +349,29 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={[styles.ctaFeature, layout.isDesktop && styles.desktopCtaFeature]}>📍 Live tracking</Text>
               </View>
             </View>
-            <View style={[styles.ctaIcon, layout.isDesktop && styles.desktopCtaIcon]}>
-              <Ionicons
-                name="arrow-forward"
-                size={layout.isMobile ? 24 : 28}
-                color="#FFFFFF" />
-            </View>
+            {layout.isDesktop && (
+              <View style={styles.desktopCtaIconContainer}>
+                <View style={[styles.ctaIcon, styles.desktopCtaIcon]}>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={32}
+                    color="#FFFFFF" />
+                </View>
+              </View>
+            )}
+            {!layout.isDesktop && (
+              <View style={styles.ctaIcon}>
+                <Ionicons
+                  name="arrow-forward"
+                  size={24}
+                  color="#FFFFFF" />
+              </View>
+            )}
           </View>
         </LinearGradient>
       </TouchableOpacity>
 
-      {/* Enhanced Services Grid */}
+      {/* Enhanced Services Section with Premium Desktop Layout */}
       <View style={[
         styles.section,
         styles.servicesSection,
@@ -341,71 +379,148 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         { paddingHorizontal: layout.sectionPadding },
         layout.isDesktop && styles.desktopServicesSection
       ]}>
-        <Text style={[styles.sectionTitle, layout.isDesktop && styles.desktopSectionTitle]}>
-          Our Services (Telangana)
-        </Text>
-        <Text style={[styles.sectionSubtitle, layout.isDesktop && styles.desktopSectionSubtitle]}>
-          City default: Hyderabad · TS only
-        </Text>
+        <View style={layout.isDesktop && styles.desktopServicesHeader}>
+          <View>
+            <Text style={[styles.sectionTitle, layout.isDesktop && styles.desktopSectionTitle]}>
+              Our Services (Telangana)
+            </Text>
+            <Text style={[styles.sectionSubtitle, layout.isDesktop && styles.desktopSectionSubtitle]}>
+              City default: Hyderabad · TS only
+            </Text>
+          </View>
+          {layout.isDesktop && (
+            <TouchableOpacity 
+              style={styles.viewAllButton}
+              onPress={() => setShowAllServices(!showAllServices)}
+            >
+              <Text style={styles.viewAllText}>{showAllServices ? 'Show Less' : 'View All'}</Text>
+              <Ionicons 
+                name={showAllServices ? "chevron-up" : "arrow-forward"} 
+                size={16} 
+                color={theme.colors.primary.main} 
+              />
+            </TouchableOpacity>
+          )}
+        </View>
 
-        <FlatList
-          data={services.slice(0, layout.isLargeDesktop ? 10 : 8)}
-          keyExtractor={(s) => s.key}
-          numColumns={layout.serviceColumns}
-          scrollEnabled={false}
-          columnWrapperStyle={{
-            justifyContent: layout.serviceColumns === 2 ? 'space-between' : 'flex-start'
-          }}
-          ItemSeparatorComponent={() => <View style={{ height: layout.gap }} />}
-          contentContainerStyle={{ paddingBottom: layout.gap }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={{ width: layout.serviceCardWidth }}>
-              <ServiceCard
-                title={item.title}
-                square
-                centerContent
-                hideSubtitle
-                icon={item.icon}
+        {/* Desktop: Featured Services in Horizontal Row */}
+        {layout.isDesktop && (
+          <View style={styles.featuredServicesRow}>
+            {services.slice(0, 3).map((item, index) => (
+              <TouchableOpacity
+                key={item.key}
                 onPress={item.onPress}
-                color={item.color}
-                gradient={item.gradient}
-                badge={item.badge}
-                featured={item.featured}
-                compact={layout.compact} />
+                style={styles.featuredServiceCard}
+              >
+                {item.gradient ? (
+                  <LinearGradient
+                    colors={item.gradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.featuredCardGradient}
+                  >
+                    {item.badge && (
+                      <View style={styles.featuredBadge}>
+                        <Text style={styles.featuredBadgeText}>{item.badge}</Text>
+                      </View>
+                    )}
+                    <View style={styles.featuredIconContainer}>
+                      <Ionicons name="woman" size={48} color="#FFFFFF" />
+                    </View>
+                    <Text style={styles.featuredTitle}>{item.title}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.featuredCardContent}>
+                    <View style={[styles.featuredIconContainer, { backgroundColor: `${item.color}15` }]}>
+                      {index === 0 ? (
+                        <Ionicons name="car" size={48} color={theme.colors.services.ride} />
+                      ) : index === 2 ? (
+                        <Ionicons name="map" size={48} color={theme.colors.services.tour} />
+                      ) : item.icon}
+                    </View>
+                    <Text style={styles.featuredTitleDark}>{item.title}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Services Grid */}
+        <View style={layout.isDesktop && styles.desktopServicesGrid}>
+          {layout.isDesktop && (
+            <View style={styles.categoryHeader}>
+              <View style={styles.categoryLine} />
+              <Text style={styles.categoryLabel}>More Services</Text>
+              <View style={styles.categoryLine} />
             </View>
-          )} />
+          )}
+          <FlatList
+            data={layout.isDesktop ? (showAllServices ? services.slice(3) : services.slice(3, 8)) : services.slice(0, layout.isLargeDesktop ? 10 : 8)}
+            keyExtractor={(s) => s.key}
+            numColumns={layout.serviceColumns}
+            scrollEnabled={false}
+            key={layout.serviceColumns}
+            columnWrapperStyle={{
+              justifyContent: layout.serviceColumns === 2 ? 'space-between' : 'flex-start',
+              gap: layout.gap,
+            }}
+            ItemSeparatorComponent={() => <View style={{ height: layout.gap }} />}
+            contentContainerStyle={{ paddingBottom: layout.gap }}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <View style={{ width: layout.serviceCardWidth }}>
+                <ServiceCard
+                  title={item.title}
+                  square={!layout.isDesktop}
+                  centerContent
+                  hideSubtitle
+                  icon={item.icon}
+                  onPress={item.onPress}
+                  color={item.color}
+                  gradient={item.gradient}
+                  badge={item.badge}
+                  featured={item.featured}
+                  compact={layout.compact} />
+              </View>
+            )} />
+        </View>
       </View>
 
-      {/* Tour Hyderabad */}
-      <View style={[styles.section, layout.page]}>
-        <Text style={styles.sectionTitle}>Tour Hyderabad</Text>
-        <Text style={styles.sectionSubtitle}>Hyperlocal curation · Telugu & Urdu friendly guides</Text>
-        <View style={styles.quickList}>
+      {/* Tour Hyderabad - Enhanced Desktop Grid */}
+      <View style={[styles.section, layout.page, layout.isDesktop && styles.desktopSection]}>
+        <Text style={[styles.sectionTitle, layout.isDesktop && styles.desktopSectionTitle]}>Tour Hyderabad</Text>
+        <Text style={[styles.sectionSubtitle, layout.isDesktop && styles.desktopSectionSubtitle]}>Hyperlocal curation · Telugu & Urdu friendly guides</Text>
+        <View style={[styles.quickList, layout.isDesktop && styles.desktopQuickList]}>
           {hyderabadTours.map((item, index) => (
-            <QuickCard key={index} item={item} />
+            <View key={index} style={layout.isDesktop ? styles.desktopQuickCardWrapper : undefined}>
+              <QuickCard item={item} />
+            </View>
           ))}
         </View>
       </View>
 
-      {/* Airport & Metro */}
-      <View style={[styles.section, layout.page]}>
-        <Text style={styles.sectionTitle}>Airport & Metro</Text>
-        <Text style={styles.sectionSubtitle}>RGIA + TSRTC Pushpak · Metro feeder pickups</Text>
-        <View style={styles.quickList}>
+      {/* Airport & Metro - Enhanced Desktop Grid */}
+      <View style={[styles.section, layout.page, layout.isDesktop && styles.desktopSection]}>
+        <Text style={[styles.sectionTitle, layout.isDesktop && styles.desktopSectionTitle]}>Airport & Metro</Text>
+        <Text style={[styles.sectionSubtitle, layout.isDesktop && styles.desktopSectionSubtitle]}>RGIA + TSRTC Pushpak · Metro feeder pickups</Text>
+        <View style={[styles.quickList, layout.isDesktop && styles.desktopQuickList]}>
           {airportMetro.map((item, index) => (
-            <QuickCard key={index} item={item} badge="HYD" />
+            <View key={index} style={layout.isDesktop ? styles.desktopQuickCardWrapper : undefined}>
+              <QuickCard item={item} badge="HYD" />
+            </View>
           ))}
         </View>
       </View>
 
-      {/* Safety Features */}
-      <View style={[styles.section, layout.page]}>
-        <Text style={styles.sectionTitle}>Safety Features</Text>
+      {/* Safety Features - Enhanced Desktop Grid */}
+      <View style={[styles.section, layout.page, layout.isDesktop && styles.desktopSection]}>
+        <Text style={[styles.sectionTitle, layout.isDesktop && styles.desktopSectionTitle]}>Safety Features</Text>
         <View
           style={[
             styles.safetyGrid,
             { columnGap: layout.gap, rowGap: layout.gap },
+            layout.isDesktop && styles.desktopSafetyGrid,
           ]}
         >
           {safetyFeatures.map((feature) => (
@@ -495,11 +610,13 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     minHeight: '100%',
+    backgroundColor: theme.colors.background.secondary,
   },
   scrollContent: {
     paddingBottom: theme.spacing.xl,
     paddingTop: 0,
     flexGrow: 1,
+    backgroundColor: theme.colors.background.secondary,
   } as any,
   // Header Styles
   header: {
@@ -513,12 +630,14 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border.light,
   },
   desktopHeader: {
-    paddingHorizontal: theme.spacing['2xl'],
-    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: theme.spacing['3xl'],
+    paddingVertical: theme.spacing['2xl'],
     borderRadius: theme.borderRadius.lg,
-    marginHorizontal: theme.spacing.xl,
-    marginTop: theme.spacing.lg,
-    ...theme.shadows.sm,
+    marginHorizontal: theme.spacing['2xl'],
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.md,
+    borderBottomWidth: 0,
   },
   logoContainer: {
     flexDirection: 'row',
@@ -531,7 +650,8 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   desktopLogoText: {
-    fontSize: theme.fontSizes.xl,
+    fontSize: theme.fontSizes['2xl'],
+    fontWeight: theme.fontWeights.bold,
   },
   headerActions: {
     flexDirection: 'row',
@@ -540,16 +660,19 @@ const styles = StyleSheet.create({
   },
   notificationButton: {
     padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
   },
   desktopNotificationButton: {
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     backgroundColor: theme.colors.background.secondary,
+    ...theme.shadows.sm,
   },
   profileButton: {
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     backgroundColor: `${theme.colors.primary.main}10`,
+    ...theme.shadows.sm,
   },
   // Welcome Section Styles
   servicesContainer: {
@@ -620,10 +743,21 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.primary,
   },
   desktopWelcomeSection: {
-    paddingHorizontal: theme.spacing['2xl'],
+    paddingHorizontal: theme.spacing['3xl'],
     paddingTop: theme.spacing['2xl'],
-    paddingBottom: theme.spacing.lg,
-    textAlign: 'center',
+    paddingBottom: theme.spacing['2xl'],
+    marginHorizontal: theme.spacing['2xl'],
+    borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.sm,
+  },
+  desktopWelcomeContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: theme.spacing['3xl'],
+  },
+  desktopWelcomeLeft: {
+    flex: 1,
   },
   welcomeText: {
     fontSize: theme.fontSizes.base,
@@ -631,8 +765,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   desktopWelcomeText: {
-    fontSize: theme.fontSizes.lg,
-    textAlign: 'center',
+    fontSize: theme.fontSizes.xl,
   },
   userNameText: {
     fontSize: theme.fontSizes['2xl'],
@@ -640,16 +773,37 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   desktopUserNameText: {
-    fontSize: theme.fontSizes['3xl'],
-    textAlign: 'center',
+    fontSize: theme.fontSizes['4xl'],
   },
   desktopWelcomeSubtitle: {
-    fontSize: theme.fontSizes.base,
+    fontSize: theme.fontSizes.lg,
     color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.md,
     maxWidth: 600,
-    alignSelf: 'center',
+  },
+  // Desktop Quick Stats
+  desktopQuickStats: {
+    flexDirection: 'row',
+    gap: theme.spacing.lg,
+  },
+  statCard: {
+    backgroundColor: theme.colors.background.secondary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    minWidth: 120,
+    ...theme.shadows.sm,
+  },
+  statValue: {
+    fontSize: theme.fontSizes['2xl'],
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.sm,
+  },
+  statLabel: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
   },
   // Primary CTA Styles
   primaryCTA: {
@@ -657,12 +811,13 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     borderRadius: theme.borderRadius.xl,
     ...theme.shadows.md,
+    overflow: 'hidden',
   },
   desktopPrimaryCTA: {
     marginHorizontal: theme.spacing['2xl'],
-    marginTop: theme.spacing.xl,
+    marginTop: theme.spacing['2xl'],
     borderRadius: theme.borderRadius['2xl'],
-    ...theme.shadows.lg,
+    ...theme.shadows.xl,
   },
   ctaContent: {
     flexDirection: 'row',
@@ -671,11 +826,18 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
   },
   desktopCtaContent: {
-    padding: theme.spacing['2xl'],
-    alignItems: 'flex-start',
+    padding: theme.spacing['3xl'],
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: theme.spacing['2xl'],
   },
   ctaTextContainer: {
     flex: 1,
+  },
+  desktopCtaTextContainer: {
+    flex: 1,
+    maxWidth: '70%',
   },
   ctaTitle: {
     fontSize: theme.fontSizes.xl,
@@ -684,8 +846,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   desktopCtaTitle: {
-    fontSize: theme.fontSizes['2xl'],
-    marginBottom: theme.spacing.sm,
+    fontSize: theme.fontSizes['3xl'],
+    marginBottom: theme.spacing.md,
   },
   ctaSubtitle: {
     fontSize: theme.fontSizes.sm,
@@ -693,8 +855,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   desktopCtaSubtitle: {
-    fontSize: theme.fontSizes.base,
-    marginBottom: theme.spacing.lg,
+    fontSize: theme.fontSizes.lg,
+    marginBottom: theme.spacing.xl,
   },
   ctaFeatures: {
     flexDirection: 'row',
@@ -702,7 +864,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   desktopCtaFeatures: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   ctaFeature: {
     fontSize: theme.fontSizes.xs,
@@ -713,10 +875,11 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
   },
   desktopCtaFeature: {
-    fontSize: theme.fontSizes.sm,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    fontSize: theme.fontSizes.base,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   ctaIcon: {
     width: 48,
@@ -726,10 +889,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  desktopCtaIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   desktopCtaIcon: {
-    width: 56,
-    height: 56,
-    marginTop: theme.spacing.md,
+    width: 64,
+    height: 64,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   // Section Styles
   section: {
@@ -737,13 +904,143 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     overflow: 'hidden' as any,
   },
+  desktopSection: {
+    marginTop: theme.spacing['3xl'],
+    paddingHorizontal: theme.spacing['3xl'],
+  },
   servicesSection: {
     paddingBottom: theme.spacing['3xl'],
     marginBottom: theme.spacing.lg,
   },
   desktopServicesSection: {
     marginTop: theme.spacing['3xl'],
-    paddingHorizontal: theme.spacing['2xl'],
+    paddingHorizontal: theme.spacing['3xl'],
+    paddingTop: theme.spacing['3xl'],
+    paddingBottom: theme.spacing['4xl'],
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.borderRadius['2xl'],
+    marginHorizontal: theme.spacing['2xl'],
+    ...theme.shadows.lg,
+  },
+  desktopServicesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing['2xl'],
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: `${theme.colors.primary.main}10`,
+    borderWidth: 1,
+    borderColor: `${theme.colors.primary.main}20`,
+  },
+  viewAllText: {
+    fontSize: theme.fontSizes.base,
+    fontWeight: theme.fontWeights.semiBold,
+    color: theme.colors.primary.main,
+  },
+  // Featured Services Row (Desktop)
+  featuredServicesRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.xl,
+    marginBottom: theme.spacing['3xl'],
+  },
+  featuredServiceCard: {
+    flex: 1,
+    borderRadius: theme.borderRadius['2xl'],
+    overflow: 'hidden',
+    ...theme.shadows.lg,
+    minHeight: 220,
+  },
+  featuredCardGradient: {
+    flex: 1,
+    padding: theme.spacing['2xl'],
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  featuredCardContent: {
+    flex: 1,
+    padding: theme.spacing['2xl'],
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.primary,
+    borderWidth: 2,
+    borderColor: theme.colors.border.light,
+  },
+  featuredBadge: {
+    position: 'absolute',
+    top: theme.spacing.lg,
+    right: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  featuredBadgeText: {
+    color: '#FFFFFF',
+    fontSize: theme.fontSizes.xs,
+    fontWeight: theme.fontWeights.bold,
+    letterSpacing: 1,
+  },
+  featuredIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: theme.borderRadius['2xl'],
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  featuredTitle: {
+    fontSize: theme.fontSizes['2xl'],
+    fontWeight: theme.fontWeights.bold,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  featuredTitleDark: {
+    fontSize: theme.fontSizes['2xl'],
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  featuredSubtitle: {
+    fontSize: theme.fontSizes.base,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+  },
+  featuredSubtitleDark: {
+    fontSize: theme.fontSizes.base,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+  desktopServicesGrid: {
+    marginTop: theme.spacing.lg,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing['2xl'],
+    gap: theme.spacing.lg,
+  },
+  categoryLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border.light,
+  },
+  categoryLabel: {
+    fontSize: theme.fontSizes.lg,
+    fontWeight: theme.fontWeights.semiBold,
+    color: theme.colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   locationSection: {
     marginTop: theme.spacing['3xl'],
@@ -758,8 +1055,7 @@ const styles = StyleSheet.create({
   },
   desktopSectionTitle: {
     fontSize: theme.fontSizes['3xl'],
-    textAlign: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   sectionSubtitle: {
     fontSize: theme.fontSizes.sm,
@@ -767,14 +1063,17 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   desktopSectionSubtitle: {
-    fontSize: theme.fontSizes.base,
-    textAlign: 'center',
+    fontSize: theme.fontSizes.lg,
     marginBottom: theme.spacing['2xl'],
   },
   safetyGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
+  },
+  desktopSafetyGrid: {
+    justifyContent: 'space-between',
+    gap: theme.spacing.xl,
   },
   safetyFeature: {
     flexGrow: 1,
@@ -801,6 +1100,16 @@ const styles = StyleSheet.create({
   },
   quickList: {
     gap: theme.spacing.sm,
+  },
+  desktopQuickList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.lg,
+  },
+  desktopQuickCardWrapper: {
+    flex: 1,
+    minWidth: 320,
+    maxWidth: '48%',
   },
   quickCard: {
     flexDirection: 'row',

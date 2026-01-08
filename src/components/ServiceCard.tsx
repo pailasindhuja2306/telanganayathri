@@ -7,6 +7,7 @@ import {
   ViewStyle,
   StyleProp,
   Animated,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import theme from '../theme';
@@ -43,21 +44,36 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   centerContent = false,
 }) => {
   const scaleValue = React.useRef(new Animated.Value(1)).current;
+  const elevationValue = React.useRef(new Animated.Value(0)).current;
 
   const handlePressIn = () => {
-    Animated.spring(scaleValue, {
-      toValue: 0.96,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleValue, {
+        toValue: 0.96,
+        useNativeDriver: true,
+      }),
+      Animated.timing(elevationValue, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleValue, {
-      toValue: 1,
-      friction: 3,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        friction: 3,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(elevationValue, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start();
   };
 
   const content = (
@@ -70,6 +86,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
       <View style={[
         styles.iconContainer,
         compact && styles.iconContainerCompact,
+        Platform.OS === 'web' && styles.iconContainerWeb,
         { backgroundColor: gradient ? 'rgba(255, 255, 255, 0.2)' : `${color}15` }
       ]}>
         {icon}
@@ -77,6 +94,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
       <Text
         style={gradient ? styles.titleWhite : styles.title}
         allowFontScaling={false}
+        numberOfLines={2}
       >
         {title}
       </Text>
@@ -84,6 +102,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         <Text
           style={gradient ? styles.subtitleWhite : styles.subtitle}
           allowFontScaling={false}
+          numberOfLines={2}
         >
           {subtitle}
         </Text>
@@ -91,13 +110,26 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
     </>
   );
 
+  const animatedStyle = {
+    transform: [{ scale: scaleValue }],
+    ...Platform.select({
+      web: {
+        boxShadow: elevationValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['0px 2px 4px rgba(0,0,0,0.1)', '0px 8px 24px rgba(0,0,0,0.15)'],
+        }),
+      },
+      default: {},
+    }),
+  };
+
   return (
     <Animated.View
       style={[
         styles.container,
         featured && styles.featured,
         square && styles.square,
-        { transform: [{ scale: scaleValue }] },
+        animatedStyle,
         style,
       ]}
     >
@@ -146,11 +178,17 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
     overflow: 'hidden',
     minHeight: 148,
+    ...Platform.select({
+      web: {
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: 'pointer',
+      },
+    }),
   },
   featured: {
     borderColor: theme.colors.accent.women,
-    borderWidth: 1,
-    ...theme.shadows.sm,
+    borderWidth: 2,
+    ...theme.shadows.md,
   },
   touchable: {
     width: '100%',
@@ -187,6 +225,11 @@ const styles = StyleSheet.create({
     height: 48,
     marginBottom: theme.spacing.sm,
     marginTop: 0,
+  },
+  iconContainerWeb: {
+    width: 64,
+    height: 64,
+    marginBottom: theme.spacing.md,
   },
   badge: {
     position: 'absolute',

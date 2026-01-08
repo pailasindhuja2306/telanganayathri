@@ -162,9 +162,13 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       intercityDriver: false,
       logistics: false,
     });
+    setBookings([]);
     try {
-      await AsyncStorage.removeItem(STORAGE_KEYS.token);
-      await AsyncStorage.removeItem(STORAGE_KEYS.profile);
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.token,
+        STORAGE_KEYS.profile,
+        STORAGE_KEYS.bookings,
+      ]);
       setTokenState(undefined);
       // clear transient app state (ride selection etc.)
       setSelectedCabTypeState(undefined);

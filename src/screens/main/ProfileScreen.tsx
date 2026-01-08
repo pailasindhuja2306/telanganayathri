@@ -57,11 +57,14 @@ const ProfileScreen: React.FC = () => {
           try {
             // Clear all app state and storage
             await logout();
+
             // Reset navigation to Language screen (entry point after logout)
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Language' }],
-            });
+            const parent = navigation.getParent?.();
+            if (parent) {
+              parent.reset({ index: 0, routes: [{ name: 'Language' }] });
+            } else {
+              navigation.reset({ index: 0, routes: [{ name: 'Language' }] });
+            }
           } catch (error) {
             console.error('Logout error:', error);
             Alert.alert('Error', 'Failed to logout. Please try again.');

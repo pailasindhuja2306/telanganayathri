@@ -30,13 +30,22 @@ const DriverProfileScreen: React.FC<Props> = ({ navigation }) => {
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: () => {
-          logout();
-          // Reset to root navigation to splash screen
+        onPress: async () => {
+          await logout();
+          const parentNav = navigation.getParent?.();
+          if (parentNav) {
+            parentNav.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'Language' }],
+              })
+            );
+            return;
+          }
           navigation.dispatch(
             CommonActions.reset({
               index: 0,
-              routes: [{ name: 'Splash' }],
+              routes: [{ name: 'Language' }],
             })
           );
         },
