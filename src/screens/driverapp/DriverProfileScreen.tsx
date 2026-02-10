@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { CommonActions } from '@react-navigation/native';
@@ -24,31 +24,41 @@ const Row = ({ icon, label, value }: { icon: any; label: string; value: string }
 const DriverProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { logout } = useAppState();
 
+  const performLogout = async () => {
+    await logout();
+    const parentNav = navigation.getParent?.();
+    if (parentNav) {
+      parentNav.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Language' }],
+        })
+      );
+      return;
+    }
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Language' }],
+      })
+    );
+  };
+
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      const confirm = (globalThis as { confirm?: (message: string) => boolean }).confirm;
+      if (!confirm || confirm('Are you sure you want to logout?')) {
+        void performLogout();
+      }
+      return;
+    }
+
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: async () => {
-          await logout();
-          const parentNav = navigation.getParent?.();
-          if (parentNav) {
-            parentNav.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{ name: 'Language' }],
-              })
-            );
-            return;
-          }
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'Language' }],
-            })
-          );
-        },
+        onPress: () => void performLogout(),
       },
     ]);
   };

@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input, Button } from '../../components';
 import theme from '../../theme';
 import { useAppState } from '../../state/AppState';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth, db } from '../../config/firebase';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 type Nav = StackNavigationProp<RootStackParamList, 'CustomerOnboarding'>;
 
 const CustomerOnboardingScreen: React.FC<{ navigation: Nav }> = ({ navigation }) => {
-  const { verifyRole, setProfile } = useAppState();
+  const { verifyRole, setProfile, phone } = useAppState();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | 'other' | ''>('');
   const [email, setEmail] = useState('');
@@ -30,6 +32,32 @@ const CustomerOnboardingScreen: React.FC<{ navigation: Nav }> = ({ navigation })
   const isMobile = width < 640;
 
   const canContinue = name.trim().length >= 2 && !!gender;
+
+  const handleCompleteProfile = async () => {
+    setProfile({ name, gender: gender || undefined });
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await setDoc(
+          doc(db, 'users', user.uid),
+          {
+            name: name.trim(),
+            gender: gender || undefined,
+            email: email.trim() || undefined,
+            emergencyContact: emergency.trim() || undefined,
+            phone: phone || undefined,
+            isProfileComplete: true,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+    } catch (error) {
+      console.warn('Failed to save profile to Firestore', error);
+    }
+    verifyRole('customer');
+    navigation.replace('MainApp');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -162,11 +190,7 @@ const CustomerOnboardingScreen: React.FC<{ navigation: Nav }> = ({ navigation })
           <Button
             title="Complete Profile"
             disabled={!canContinue}
-            onPress={() => {
-              setProfile({ name, gender: gender || undefined });
-              verifyRole('customer');
-              navigation.replace('MainApp');
-            }}
+            onPress={handleCompleteProfile}
             fullWidth
             gradient
             style={styles.continueButton}
@@ -176,11 +200,7 @@ const CustomerOnboardingScreen: React.FC<{ navigation: Nav }> = ({ navigation })
           {canContinue && (
             <TouchableOpacity 
               style={styles.skipButton}
-              onPress={() => {
-                setProfile({ name, gender: gender || undefined });
-                verifyRole('customer');
-                navigation.replace('MainApp');
-              }}
+              onPress={handleCompleteProfile}
             >
               <Text style={styles.skipText}>Skip optional fields</Text>
               <Ionicons name="arrow-forward" size={16} color={theme.colors.primary.main} />

@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Platform, useWindowDimensions, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Platform, useWindowDimensions, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,7 +8,10 @@ import { useAppState } from '../../state/AppState';
 
 const BookingsScreen: React.FC = () => {
   const { width } = useWindowDimensions();
-  const { bookings, updateBookingStatus } = useAppState();
+  const { bookings, updateBookingStatus, syncBookingsFromRemote } = useAppState();
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
 
   const layout = useMemo(() => {
     const isMobile = width < 640;
@@ -20,12 +23,16 @@ const BookingsScreen: React.FC = () => {
     };
   }, [width]);
 
+  React.useEffect(() => {
+    void syncBookingsFromRemote();
+  }, [syncBookingsFromRemote]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return theme.colors.success.main;
-      case 'completed': return theme.colors.text.secondary;
-      case 'cancelled': return theme.colors.error.main;
-      default: return theme.colors.text.secondary;
+      case 'active': return typeof theme.colors.success === 'string' ? theme.colors.success : (theme.colors.success as any).main;
+      case 'completed': return typeof theme.colors.text.secondary === 'string' ? theme.colors.text.secondary : theme.colors.text.secondary;
+      case 'cancelled': return typeof theme.colors.error === 'string' ? theme.colors.error : (theme.colors.error as any).main;
+      default: return typeof theme.colors.text.secondary === 'string' ? theme.colors.text.secondary : theme.colors.text.secondary;
     }
   };
 
@@ -37,6 +44,25 @@ const BookingsScreen: React.FC = () => {
       case 'tour': return 'map-outline';
       default: return 'document-outline';
     }
+  };
+
+  const openCancelModal = (bookingId: string) => {
+    setCancelBookingId(bookingId);
+    setCancelReason('');
+    setCancelModalVisible(true);
+  };
+
+  const closeCancelModal = () => {
+    setCancelModalVisible(false);
+    setCancelReason('');
+    setCancelBookingId(null);
+  };
+
+  const confirmCancel = () => {
+    if (!cancelBookingId) return;
+    const reason = cancelReason.trim();
+    updateBookingStatus(cancelBookingId, 'cancelled', reason.length > 0 ? reason : undefined);
+    closeCancelModal();
   };
 
   return (
@@ -89,14 +115,14 @@ const BookingsScreen: React.FC = () => {
                 {/* Locations */}
                 <View style={styles.locationContainer}>
                   <View style={styles.locationRow}>
-                    <Ionicons name="location" size={16} color={theme.colors.success.main} />
+                    <Ionicons name="location" size={16} color={typeof theme.colors.success === 'string' ? theme.colors.success : (theme.colors.success as any).main} />
                     <Text style={styles.locationText} numberOfLines={1}>{booking.pickupAddress}</Text>
                   </View>
                   {booking.dropAddress && (
                     <>
                       <View style={styles.locationDivider} />
                       <View style={styles.locationRow}>
-                        <Ionicons name="location" size={16} color={theme.colors.error.main} />
+                        <Ionicons name="location" size={16} color={typeof theme.colors.error === 'string' ? theme.colors.error : (theme.colors.error as any).main} />
                         <Text style={styles.locationText} numberOfLines={1}>{booking.dropAddress}</Text>
                       </View>
                     </>
@@ -114,22 +140,71 @@ const BookingsScreen: React.FC = () => {
                   <Text style={styles.bookingPrice}>₹{booking.price}</Text>
                 </View>
 
+                {booking.status === 'cancelled' && booking.cancelReason ? (
+                  <View style={styles.cancelReasonRow}>
+                    <Ionicons name="information-circle-outline" size={16} color={theme.colors.text.secondary} />
+                    <Text style={styles.cancelReasonText} numberOfLines={2}>
+                      {booking.cancelReason}
+                    </Text>
+                  </View>
+                ) : null}
+
                 {/* Complete Button for Active Bookings */}
                 {booking.status === 'active' && (
-                  <TouchableOpacity
-                    style={styles.completeButton}
-                    onPress={() => updateBookingStatus(booking.id, 'completed')}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                    <Text style={styles.completeButtonText}>Complete Ride</Text>
-                  </TouchableOpacity>
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={styles.completeButton}
+                      onPress={() => updateBookingStatus(booking.id, 'completed')}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                      <Text style={styles.completeButtonText}>Complete Ride</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={() => openCancelModal(booking.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="close-circle" size={20} color={typeof theme.colors.error === 'string' ? theme.colors.error : (theme.colors.error as any).main} />
+                      <Text style={styles.cancelButtonText}>Cancel Ride</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </LinearGradient>
             </TouchableOpacity>
           ))
         )}
       </ScrollView>
+
+      <Modal
+        visible={cancelModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeCancelModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Cancel Ride</Text>
+            <Text style={styles.modalSubtitle}>Reason is optional</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Add a reason (optional)"
+              placeholderTextColor={theme.colors.text.tertiary}
+              value={cancelReason}
+              onChangeText={setCancelReason}
+              multiline
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalSecondaryButton} onPress={closeCancelModal}>
+                <Text style={styles.modalSecondaryText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalPrimaryButton} onPress={confirmCancel}>
+                <Text style={styles.modalPrimaryText}>Cancel Ride</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -282,17 +357,107 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: theme.spacing.sm,
-    backgroundColor: theme.colors.success.main,
+    backgroundColor: typeof theme.colors.success === 'string' ? theme.colors.success : (theme.colors.success as any).main,
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     borderRadius: theme.borderRadius.md,
-    marginTop: theme.spacing.md,
     ...theme.shadows.sm,
   },
   completeButtonText: {
     fontSize: theme.fontSizes.base,
-    fontWeight: theme.fontWeights.semibold,
+    fontWeight: theme.fontWeights.semiBold,
     color: '#FFFFFF',
+  },
+  actionRow: {
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: typeof theme.colors.error === 'string' ? theme.colors.error : (theme.colors.error as any).main,
+    backgroundColor: '#100f0f',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+  },
+  cancelButtonText: {
+    fontSize: theme.fontSizes.base,
+    fontWeight: theme.fontWeights.semiBold,
+    color: typeof theme.colors.error === 'string' ? theme.colors.error : (theme.colors.error as any).main,
+  },
+  cancelReasonRow: {
+    marginTop: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  cancelReasonText: {
+    flex: 1,
+    fontSize: theme.fontSizes.xs,
+    color: theme.colors.text.secondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: theme.spacing.lg,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+  },
+  modalTitle: {
+    fontSize: theme.fontSizes.lg,
+    fontWeight: theme.fontWeights.bold,
+    color: theme.colors.text.primary,
+  },
+  modalSubtitle: {
+    marginTop: theme.spacing.xs,
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.secondary,
+  },
+  modalInput: {
+    marginTop: theme.spacing.md,
+    minHeight: 80,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.primary,
+    textAlignVertical: 'top',
+  },
+  modalActions: {
+    marginTop: theme.spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: theme.spacing.sm,
+  },
+  modalSecondaryButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  modalSecondaryText: {
+    color: theme.colors.text.primary,
+    fontWeight: theme.fontWeights.semiBold,
+  },
+  modalPrimaryButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: typeof theme.colors.error === 'string' ? theme.colors.error : (theme.colors.error as any).main,
+  },
+  modalPrimaryText: {
+    color: '#FFFFFF',
+    fontWeight: theme.fontWeights.semiBold,
   },
 });
 

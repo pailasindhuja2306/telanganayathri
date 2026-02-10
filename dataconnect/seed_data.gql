@@ -1,0 +1,128 @@
+mutation SeedDatabase @transaction @auth(level: NO_ACCESS) {
+  user_insertMany(
+    data: [
+      {
+        id: "6f8e4ff4-71d4-4a30-87ee-916203b52a85"
+        displayName: "demo_user_1"
+        createdAt: "2024-04-07T12:00:00Z"
+        email: "demo_user_1@example.com"
+        photoUrl: "https://example.com/avatars/demo_user_1.jpg"
+      }
+      {
+        id: "7a9d5ee5-82e5-5b41-98ff-a27314c63b96"
+        displayName: "demo_user_2"
+        createdAt: "2024-04-07T13:00:00Z"
+        email: "demo_user_2@example.com"
+        photoUrl: "https://example.com/avatars/demo_user_2.jpg"
+      }
+    ]
+  )
+  movie_insertMany(
+    data: [
+      {
+        id: "8b0e6ff6-93f6-6c52-af11-c38426d74c07"
+        title: "Inception"
+        createdAt: "2024-04-07T14:00:00Z"
+        genres: ["sci-fi", "action", "thriller"]
+        runtime: 148
+        summary: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a CEO."
+        year: 2010
+      }
+      {
+        id: "9c1f7gg7-a4g7-7d63-bg22-d49537e85d18"
+        title: "The Matrix"
+        createdAt: "2024-04-07T15:00:00Z"
+        genres: ["sci-fi", "action"]
+        runtime: 136
+        summary: "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers."
+        year: 1999
+      }
+    ]
+  )
+  movieList_insertMany(
+    data: [
+      {
+        id: "a02g8hh8-b5h8-8e74-ch33-e5a648f96e29"
+        userId: "6f8e4ff4-71d4-4a30-87ee-916203b52a85"
+        name: "My Favorite Sci-Fi Movies"
+        createdAt: "2024-04-07T16:00:00Z"
+        updatedAt: "2024-04-07T16:00:00Z"
+        description: "A list of my favorite sci-fi movies."
+        isPublic: true
+      }
+      {
+        id: "b13h9ii9-c6i9-9f85-di44-f6b759ga7f30"
+        userId: "7a9d5ee5-82e5-5b41-98ff-a27314c63b96"
+        name: "Action Movies to Watch"
+        createdAt: "2024-04-07T17:00:00Z"
+        updatedAt: "2024-04-07T17:00:00Z"
+        description: "A list of action movies I want to watch."
+        isPublic: false
+      }
+    ]
+  )
+  movieListItem_insertMany(
+    data: [
+      {
+        id: "c24i0jj0-d7j0-0a96-ej55-g7c860hb8g41"
+        movieListId: "a02g8hh8-b5h8-8e74-ch33-e5a648f96e29"
+        movieId: "8b0e6ff6-93f6-6c52-af11-c38426d74c07"
+        position: 1
+      }
+      {
+        id: "d35j1kk1-e8k1-1ba7-fk66-h8d971ic9h52"
+        movieListId: "b13h9ii9-c6i9-9f85-di44-f6b759ga7f30"
+        movieId: "9c1f7gg7-a4g7-7d63-bg22-d49537e85d18"
+        position: 1
+      }
+    ]
+  )
+  watch_insertMany(
+    data: [
+      {
+        id: "e46k2ll2-f9l2-2ca8-gl77-i9e082jd0i63"
+        userId: "6f8e4ff4-71d4-4a30-87ee-916203b52a85"
+        movieId: "8b0e6ff6-93f6-6c52-af11-c38426d74c07"
+        createdAt: "2024-04-07T18:00:00Z"
+        watchDate: "2024-04-06"
+        location: "Home"
+      }
+      {
+        id: "f57l3mm3-0am3-3db9-hm88-j0f193ke1j74"
+        userId: "7a9d5ee5-82e5-5b41-98ff-a27314c63b96"
+        movieId: "9c1f7gg7-a4g7-7d63-bg22-d49537e85d18"
+        createdAt: "2024-04-07T19:00:00Z"
+        watchDate: "2024-04-05"
+        location: "Cinema"
+      }
+    ]
+  )
+  review_insertMany(
+    data: [
+      {
+        id: "0a8m4nn4-1bn4-4ea0-in99-k1g2a4lf2k85"
+        userId: "6f8e4ff4-71d4-4a30-87ee-916203b52a85"
+        movieId: "8b0e6ff6-93f6-6c52-af11-c38426d74c07"
+        watchId: "e46k2ll2-f9l2-2ca8-gl77-i9e082jd0i63"
+        createdAt: "2024-04-07T20:00:00Z"
+        updatedAt: "2024-04-07T20:00:00Z"
+        isPublic: true
+        rating: 5
+        reviewText: "A great movie!"
+        shareLink: "https://example.com/reviews/0a8m4nn4-1bn4-4ea0-in99-k1g2a4lf2k85"
+      }
+      {
+        id: "1b9n5oo5-2co5-5fb1-jo00-l2h3b5mg3l96"
+        userId: "7a9d5ee5-82e5-5b41-98ff-a27314c63b96"
+        movieId: "9c1f7gg7-a4g7-7d63-bg22-d49537e85d18"
+        watchId: "f57l3mm3-0am3-3db9-hm88-j0f193ke1j74"
+        createdAt: "2024-04-07T21:00:00Z"
+        updatedAt: "2024-04-07T21:00:00Z"
+        isPublic: false
+        rating: 4
+        reviewText: "A good action movie."
+        shareLink: "https://example.com/reviews/1b9n5oo5-2co5-5fb1-jo00-l2h3b5mg3l96"
+      }
+    ]
+  )
+}

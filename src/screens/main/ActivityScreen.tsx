@@ -8,7 +8,7 @@ import { useAppState } from '../../state/AppState';
 
 const ActivityScreen: React.FC = () => {
   const { width } = useWindowDimensions();
-  const { activities } = useAppState();
+  const { activities, syncBookingsFromRemote } = useAppState();
 
   const layout = useMemo(() => {
     const isMobile = width < 640;
@@ -19,6 +19,10 @@ const ActivityScreen: React.FC = () => {
       subtitleSize: isMobile ? theme.fontSizes.sm : theme.fontSizes.base,
     };
   }, [width]);
+
+  React.useEffect(() => {
+    void syncBookingsFromRemote();
+  }, [syncBookingsFromRemote]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {

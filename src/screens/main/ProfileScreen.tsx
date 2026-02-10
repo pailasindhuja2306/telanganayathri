@@ -20,7 +20,7 @@ import theme from '../../theme';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { logout, profile, phone, isProfileComplete } = useAppState();
+  const { logout, profile, phone, isProfileComplete, bookings, activities } = useAppState();
   const { width } = useWindowDimensions();
 
   const layout = useMemo(() => {
@@ -43,33 +43,49 @@ const ProfileScreen: React.FC = () => {
     }
   }, [isProfileComplete]);
 
+  const totalRides = typeof profile.totalRides === 'number' ? profile.totalRides : bookings.length;
+  const rating = typeof profile.rating === 'number' ? profile.rating : undefined;
+  const referrals = typeof profile.referrals === 'number' ? profile.referrals : 0;
+  const walletBalance = typeof profile.walletBalance === 'number' ? profile.walletBalance : 0;
+  const offersCount = typeof profile.offersCount === 'number' ? profile.offersCount : 0;
+
   const handleComingSoon = (title: string) => {
     Alert.alert(title, 'This feature will be available soon.');
   };
 
+  const performLogout = async () => {
+    try {
+      // Clear all app state and storage
+      await logout();
+
+      // Reset navigation to Language screen (entry point after logout)
+      const parent = navigation.getParent?.();
+      if (parent) {
+        parent.reset({ index: 0, routes: [{ name: 'Language' }] });
+      } else {
+        navigation.reset({ index: 0, routes: [{ name: 'Language' }] });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
   const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      const confirm = (globalThis as { confirm?: (message: string) => boolean }).confirm;
+      if (!confirm || confirm('Are you sure you want to logout?')) {
+        void performLogout();
+      }
+      return;
+    }
+
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            // Clear all app state and storage
-            await logout();
-
-            // Reset navigation to Language screen (entry point after logout)
-            const parent = navigation.getParent?.();
-            if (parent) {
-              parent.reset({ index: 0, routes: [{ name: 'Language' }] });
-            } else {
-              navigation.reset({ index: 0, routes: [{ name: 'Language' }] });
-            }
-          } catch (error) {
-            console.error('Logout error:', error);
-            Alert.alert('Error', 'Failed to logout. Please try again.');
-          }
-        },
+        onPress: () => void performLogout(),
       },
     ]);
   };
@@ -114,9 +130,9 @@ const ProfileScreen: React.FC = () => {
 
         {/* Stats Cards */}
         <View style={[styles.statsContainer, { paddingHorizontal: layout.horizontalPadding }]}>
-          <StatCard icon="car-outline" label="Total Rides" value="24" color={theme.colors.primary.main} />
-          <StatCard icon="star" label="Rating" value="4.8" color={theme.colors.warning} />
-          <StatCard icon="people-outline" label="Referrals" value="8" color={theme.colors.success} />
+          <StatCard icon="car-outline" label="Total Rides" value={`${totalRides}`} color={theme.colors.primary.main} />
+          <StatCard icon="star" label="Rating" value={rating !== undefined ? rating.toFixed(1) : '--'} color={theme.colors.warning} />
+          <StatCard icon="people-outline" label="Referrals" value={`${referrals}`} color={theme.colors.success} />
         </View>
 
         {/* Quick Actions */}
@@ -126,14 +142,14 @@ const ProfileScreen: React.FC = () => {
             <QuickActionCard
               icon="wallet-outline"
               title="Wallet"
-              subtitle="₹250"
+              subtitle={`₹${walletBalance}`}
               color={theme.colors.accent.main}
               onPress={() => handleComingSoon('Wallet')}
             />
             <QuickActionCard
               icon="people-outline"
               title="Referrals"
-              subtitle="Earn rewards"
+              subtitle={`${referrals} referrals`}
               color={theme.colors.success}
               onPress={() => handleComingSoon('Referrals')}
             />
@@ -155,7 +171,7 @@ const ProfileScreen: React.FC = () => {
               title="Trip History"
               subtitle="View all your past rides"
               onPress={() => handleComingSoon('Trip History')}
-              badge="24"
+              badge={`${activities.length}`}
             />
           </View>
         </View>
@@ -175,7 +191,7 @@ const ProfileScreen: React.FC = () => {
               title="Offers & Rewards"
               subtitle="Claim your exclusive offers"
               onPress={() => handleComingSoon('Offers & Rewards')}
-              badge="5"
+              badge={`${offersCount}`}
               badgeColor={theme.colors.success}
             />
           </View>

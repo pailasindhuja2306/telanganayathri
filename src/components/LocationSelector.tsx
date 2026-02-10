@@ -8,6 +8,7 @@ import {
   TextInput,
   FlatList,
   Modal,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -84,24 +85,28 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
 
       // Reverse geocoding to get address
       let address = 'Current Location';
-      try {
-        const geocodedLocations = await Location.reverseGeocodeAsync({
-          latitude,
-          longitude,
-        });
+      if (Platform.OS !== 'web') {
+        try {
+          const geocodedLocations = await Location.reverseGeocodeAsync({
+            latitude,
+            longitude,
+          });
 
-        if (geocodedLocations && geocodedLocations.length > 0) {
-          const geo = geocodedLocations[0];
-          const parts = [];
-          if (geo.street) parts.push(geo.street);
-          if (geo.city) parts.push(geo.city);
-          if (geo.region) parts.push(geo.region);
-          address = parts.length > 0 ? parts.join(', ') : `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          if (geocodedLocations && geocodedLocations.length > 0) {
+            const geo = geocodedLocations[0];
+            const parts = [];
+            if (geo.street) parts.push(geo.street);
+            if (geo.city) parts.push(geo.city);
+            if (geo.region) parts.push(geo.region);
+            address = parts.length > 0 ? parts.join(', ') : `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          }
+        } catch (geocodeErr) {
+          // If geocoding fails, use coordinates
+          address = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          console.log('Geocoding error (using coordinates):', geocodeErr);
         }
-      } catch (geocodeErr) {
-        // If geocoding fails, use coordinates
+      } else {
         address = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-        console.log('Geocoding error (using coordinates):', geocodeErr);
       }
 
       // Call onSelect with the location

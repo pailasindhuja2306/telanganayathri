@@ -64,17 +64,19 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
       
       // Try to get reverse geocoding (address)
       let address = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      try {
-        const geocodedAddress = await Location.reverseGeocodeAsync({
-          latitude,
-          longitude,
-        });
-        if (geocodedAddress.length > 0) {
-          const { name, street, city } = geocodedAddress[0];
-          address = `${street || name || ''} ${city || ''}`.trim() || address;
+      if (Platform.OS !== 'web') {
+        try {
+          const geocodedAddress = await Location.reverseGeocodeAsync({
+            latitude,
+            longitude,
+          });
+          if (geocodedAddress.length > 0) {
+            const { name, street, city } = geocodedAddress[0];
+            address = `${street || name || ''} ${city || ''}`.trim() || address;
+          }
+        } catch (err) {
+          // Fallback to coordinates if geocoding fails
         }
-      } catch (err) {
-        // Fallback to coordinates if geocoding fails
       }
 
       const locationData: LocationData = {

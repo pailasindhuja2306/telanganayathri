@@ -13,11 +13,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types';
 import { Button, Input } from '../../components';
 import theme from '../../theme';
 import { useAppState } from '../../state/AppState';
+import { auth, db, firebaseConfig } from '../../config/firebase';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -29,9 +33,12 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [otp, setOtp] = useState('');
     const [otpSent, setOtpSent] = useState(false);
+    const [verificationId, setVerificationId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const { setPhone, setToken, isProfileComplete } = useAppState();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const { setPhone, setToken, syncProfileFromRemote, syncBookingsFromRemote } = useAppState();
     const { width } = useWindowDimensions();
+    const recaptchaVerifier = React.useRef<FirebaseRecaptchaVerifierModal>(null);
 
     const layout = useMemo(() => {
         const isMobile = width < 640;
@@ -69,33 +76,67 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         ]).start();
     }, []);
 
-    const handleSendOTP = () => {
-        if (phoneNumber.length === 10) {
-            setLoading(true);
-            setTimeout(() => {
-                setLoading(false);
-                setOtpSent(true);
-            }, 1500);
+    const handleSendOTP = async () => {
+        if (phoneNumber.length !== 10) return;
+        setLoading(true);
+        setErrorMessage(null);
+        try {
+            const provider = new PhoneAuthProvider(auth);
+            const id = await provider.verifyPhoneNumber(
+                `+91${phoneNumber}`,
+                recaptchaVerifier.current as any
+            );
+            setVerificationId(id);
+            setOtpSent(true);
+        } catch (err: any) {
+            setErrorMessage(err?.message || 'Failed to send OTP. Try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleVerifyOTP = () => {
-        if (otp.length === 6) {
-            setLoading(true);
-            setTimeout(async () => {
-                setLoading(false);
-                setPhone(phoneNumber);
-                try {
-                    await setToken('demo-token');
-                } catch (err) {
-                    console.warn('Failed to set token', err);
-                }
-                if (isProfileComplete) {
-                    navigation.replace('MainApp');
-                } else {
-                    navigation.replace('CustomerOnboarding');
-                }
-            }, 1500);
+    const handleVerifyOTP = async () => {
+        if (otp.length !== 6) return;
+        if (!verificationId) {
+            setErrorMessage('Please request OTP again.');
+            return;
+        }
+        setLoading(true);
+        setErrorMessage(null);
+        try {
+            const credential = PhoneAuthProvider.credential(verificationId, otp);
+            const userCredential = await signInWithCredential(auth, credential);
+            const user = userCredential.user;
+            let profileComplete = false;
+            try {
+                profileComplete = await syncProfileFromRemote();
+                const userRef = doc(db, 'users', user.uid);
+                await setDoc(
+                    userRef,
+                    {
+                        phone: phoneNumber,
+                        updatedAt: serverTimestamp(),
+                        lastLoginAt: serverTimestamp(),
+                        isProfileComplete: profileComplete,
+                    },
+                    { merge: true }
+                );
+            } catch (error) {
+                console.warn('Failed to update user in Firestore', error);
+            }
+            const token = await user.getIdToken();
+            setPhone(phoneNumber);
+            await setToken(token);
+            await syncBookingsFromRemote();
+            if (profileComplete) {
+                navigation.replace('MainApp');
+            } else {
+                navigation.replace('CustomerOnboarding');
+            }
+        } catch (err: any) {
+            setErrorMessage(err?.message || 'Invalid OTP. Try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -106,6 +147,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
         >
+            <FirebaseRecaptchaVerifierModal
+                ref={recaptchaVerifier}
+                firebaseConfig={firebaseConfig}
+                attemptInvisibleVerification
+            />
             <SafeAreaView style={styles.container}>
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
                     <ScrollView
@@ -149,6 +195,9 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                                     <View style={[styles.form, { gap: layout.inputGap }]}>
                                         {!otpSent ? (
                                             <>
+                                                {errorMessage ? (
+                                                    <Text style={styles.errorText}>{errorMessage}</Text>
+                                                ) : null}
                                                 <Input
                                                     label="Mobile Number"
                                                     placeholder="Enter 10-digit mobile number"
@@ -171,6 +220,9 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                                             </>
                                         ) : (
                                             <>
+                                                {errorMessage ? (
+                                                    <Text style={styles.errorText}>{errorMessage}</Text>
+                                                ) : null}
                                                 <View style={styles.otpHeader}>
                                                     <Ionicons name="phone-portrait" size={24} color={theme.colors.primary.main} />
                                                     <Text style={[styles.otpTitle, { fontSize: layout.isMobile ? theme.fontSizes.base : theme.fontSizes.lg }]}>
@@ -202,7 +254,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                                                     leftIcon={<Ionicons name="checkmark" size={18} color="#FFFFFF" />}
                                                 />
 
-                                                <TouchableOpacity onPress={() => { setOtpSent(false); setOtp(''); }} style={styles.resendContainer}>
+                                                <TouchableOpacity onPress={() => { setOtpSent(false); setOtp(''); setVerificationId(null); }} style={styles.resendContainer}>
                                                     <Text style={styles.resendText}>Didn't receive code? </Text>
                                                     <Text style={styles.resendLink}>Resend OTP</Text>
                                                 </TouchableOpacity>
@@ -237,6 +289,10 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
+    },
+    errorText: {
+        color: '#D32F2F',
+        fontSize: theme.fontSizes.xs,
     },
     keyboardView: {
         flex: 1,

@@ -13,11 +13,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types';
 import { Button, Input } from '../../components';
 import theme from '../../theme';
 import { useAppState } from '../../state/AppState';
+import { auth, db, firebaseConfig } from '../../config/firebase';
 
 type SignupScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Signup'>;
 
@@ -28,12 +32,16 @@ interface Props {
 const SignupScreen: React.FC<Props> = ({ navigation }) => {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | ''>('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [verificationId, setVerificationId] = useState<string | null>(null);
   const [agree, setAgree] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { setProfile, setPhone, setToken } = useAppState();
   const { width } = useWindowDimensions();
+  const recaptchaVerifier = React.useRef<FirebaseRecaptchaVerifierModal>(null);
 
   const layout = useMemo(() => {
     const isMobile = width < 640;
@@ -54,7 +62,7 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
     };
   }, [width]);
 
-  const canSend = name.trim().length >= 2 && phoneNumber.length === 10 && agree;
+  const canSend = name.trim().length >= 2 && !!gender && phoneNumber.length === 10 && agree;
   const canVerify = otp.length === 6;
 
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -75,29 +83,64 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
     ]).start();
   }, []);
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
     if (!canSend) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setErrorMessage(null);
+    try {
+      const provider = new PhoneAuthProvider(auth);
+      const id = await provider.verifyPhoneNumber(
+        `+91${phoneNumber}`,
+        recaptchaVerifier.current as any
+      );
+      setVerificationId(id);
       setOtpSent(true);
-    }, 1200);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to send OTP. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!canVerify) return;
+    if (!verificationId) {
+      setErrorMessage('Please request OTP again.');
+      return;
+    }
     setLoading(true);
-    setTimeout(async () => {
-      setLoading(false);
-      setProfile({ name: name.trim() });
-      setPhone(phoneNumber);
+    setErrorMessage(null);
+    try {
+      const credential = PhoneAuthProvider.credential(verificationId, otp);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
       try {
-        await setToken('demo-token');
-      } catch (err) {
-        console.warn('Failed to set token', err);
+        await setDoc(
+          doc(db, 'users', user.uid),
+          {
+            name: name.trim(),
+            gender: gender || undefined,
+            phone: phoneNumber,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            lastLoginAt: serverTimestamp(),
+            isProfileComplete: true,
+          },
+          { merge: true }
+        );
+      } catch (error) {
+        console.warn('Failed to create user in Firestore', error);
       }
+      const token = await user.getIdToken();
+      setProfile({ name: name.trim(), gender: gender || undefined });
+      setPhone(phoneNumber);
+      await setToken(token);
       navigation.replace('MainApp');
-    }, 1200);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Invalid OTP. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -107,6 +150,11 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={firebaseConfig}
+        attemptInvisibleVerification
+      />
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
           <ScrollView
@@ -150,6 +198,9 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
                   <View style={[styles.form, { gap: layout.inputGap }]}>
                     {!otpSent ? (
                       <>
+                        {errorMessage ? (
+                          <Text style={styles.errorText}>{errorMessage}</Text>
+                        ) : null}
                         <Input
                           label="Full Name"
                           placeholder="Your name"
@@ -157,6 +208,29 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
                           onChangeText={setName}
                           leftIcon={<Ionicons name="person-outline" size={20} color={theme.colors.primary.main} />}
                         />
+                        <View style={styles.genderContainer}>
+                          <Text style={styles.genderLabel}>Gender</Text>
+                          <View style={styles.genderRow}>
+                            <GenderChip
+                              icon="male"
+                              label="Male"
+                              active={gender === 'male'}
+                              onPress={() => setGender('male')}
+                            />
+                            <GenderChip
+                              icon="female"
+                              label="Female"
+                              active={gender === 'female'}
+                              onPress={() => setGender('female')}
+                            />
+                            <GenderChip
+                              icon="male-female"
+                              label="Other"
+                              active={gender === 'other'}
+                              onPress={() => setGender('other')}
+                            />
+                          </View>
+                        </View>
                         <Input
                           label="Mobile Number"
                           placeholder="Enter 10-digit mobile number"
@@ -194,6 +268,9 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
                       </>
                     ) : (
                       <>
+                        {errorMessage ? (
+                          <Text style={styles.errorText}>{errorMessage}</Text>
+                        ) : null}
                         <View style={styles.otpHeader}>
                           <Ionicons name="phone-portrait" size={24} color={theme.colors.primary.main} />
                           <Text style={[styles.otpTitle, { fontSize: layout.isMobile ? theme.fontSizes.base : theme.fontSizes.lg }]}>
@@ -225,7 +302,7 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
                           leftIcon={<Ionicons name="checkmark" size={18} color="#FFFFFF" />}
                         />
 
-                        <TouchableOpacity onPress={() => { setOtpSent(false); setOtp(''); }} style={styles.resendContainer}>
+                        <TouchableOpacity onPress={() => { setOtpSent(false); setOtp(''); setVerificationId(null); }} style={styles.resendContainer}>
                           <Text style={styles.resendText}>Didn't receive code? </Text>
                           <Text style={styles.resendLink}>Resend OTP</Text>
                         </TouchableOpacity>
@@ -249,12 +326,44 @@ const SignupScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
+interface GenderChipProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  active?: boolean;
+  onPress: () => void;
+}
+
+const GenderChip: React.FC<GenderChipProps> = ({ icon, label, active, onPress }) => {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={[styles.genderChip, active && styles.genderChipActive]}
+    >
+      <View style={[styles.genderIconContainer, active && styles.genderIconContainerActive]}>
+        <Ionicons
+          name={icon}
+          size={18}
+          color={active ? '#FFFFFF' : theme.colors.primary.main}
+        />
+      </View>
+      <Text style={[styles.genderChipLabel, active && styles.genderChipLabelActive]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
 const styles = StyleSheet.create({
   gradientBackground: {
     flex: 1,
   },
   container: {
     flex: 1,
+  },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: theme.fontSizes.xs,
   },
   keyboardView: {
     flex: 1,
@@ -307,6 +416,53 @@ const styles = StyleSheet.create({
   subtitle: {
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+  genderContainer: {
+    gap: theme.spacing.sm,
+  },
+  genderLabel: {
+    color: theme.colors.text.primary,
+    fontWeight: theme.fontWeights.semiBold,
+    fontSize: theme.fontSizes.sm,
+  },
+  genderRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  genderChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+    backgroundColor: '#FFFFFF',
+  },
+  genderChipActive: {
+    backgroundColor: theme.colors.primary.main,
+    borderColor: theme.colors.primary.main,
+  },
+  genderIconContainer: {
+    width: 22,
+    height: 22,
+    borderRadius: theme.borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${theme.colors.primary.main}12`,
+  },
+  genderIconContainerActive: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  genderChipLabel: {
+    color: theme.colors.text.primary,
+    fontWeight: theme.fontWeights.medium,
+    fontSize: theme.fontSizes.xs,
+  },
+  genderChipLabelActive: {
+    color: '#FFFFFF',
   },
   form: {
     marginBottom: theme.spacing.lg,

@@ -24,6 +24,8 @@ import { Vehicle } from '../../components/VehicleSelector';
 import { BookingLocation } from '../../components/LocationSelector';
 import theme from '../../theme';
 import { useAppState } from '../../state/AppState';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../config/firebase';
 
 type RideBookingNavigationProp = StackNavigationProp<RootStackParamList, 'RideBooking'>;
 
@@ -154,6 +156,39 @@ const RideBookingScreen: React.FC<Props> = ({ navigation }) => {
     setIsBooking(true);
     try {
       const selectedVehicle = vehicleTypes.find(v => v.id === selectedVehicleId);
+
+      const user = auth.currentUser;
+      let rideId: string | undefined;
+      if (user) {
+        try {
+          const rideDoc = await addDoc(collection(db, 'rides'), {
+            userId: user.uid,
+            status: 'requested',
+            rideType: 'city',
+            pickup: {
+              address: pickupAddress,
+              lat: pickupLocation.latitude,
+              lng: pickupLocation.longitude,
+            },
+            drop: {
+              address: dropAddress,
+              lat: dropLocation.latitude,
+              lng: dropLocation.longitude,
+            },
+            vehicle: {
+              id: selectedVehicleId,
+              name: selectedVehicle?.name || 'Vehicle',
+            },
+            fareEstimate: selectedVehiclePrice,
+            distanceKm: distance,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          rideId = rideDoc.id;
+        } catch (error) {
+          console.warn('Failed to create ride in Firestore', error);
+        }
+      }
       
       // Save booking to app state
       await addBooking({
@@ -164,13 +199,14 @@ const RideBookingScreen: React.FC<Props> = ({ navigation }) => {
         dropAddress,
         price: selectedVehiclePrice,
         distance,
+        rideId,
       });
 
       // Simulate booking process
       setTimeout(() => {
         setIsBooking(false);
         // Navigate to bookings screen to show the booking
-        navigation.navigate('Main', { screen: 'Bookings' } as any);
+        navigation.navigate('MainApp', { screen: 'Bookings' } as any);
       }, 1500);
     } catch (error) {
       setIsBooking(false);
