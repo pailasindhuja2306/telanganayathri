@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, Image, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -16,6 +16,7 @@ interface Props {
 const SplashScreen: React.FC<Props> = ({ navigation }) => {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const scaleAnim = React.useRef(new Animated.Value(0.3)).current;
+  const { width } = useWindowDimensions();
 
   const { token, isProfileComplete } = useAppState();
 
@@ -51,11 +52,34 @@ const SplashScreen: React.FC<Props> = ({ navigation }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  const isMobile = width < 640;
+  const isTablet = width >= 640 && width < 1024;
+  const cornerSize = isMobile ? 100 : isTablet ? 140 : 180;
+  const cornerTop = isMobile ? theme.spacing['4xl'] : isTablet ? theme.spacing['5xl'] : theme.spacing['6xl'];
+
   return (
     <LinearGradient
       colors={[theme.colors.primary.dark, theme.colors.primary.main, theme.colors.primary.light]}
       style={styles.container}
     >
+      <Image
+        source={require('../../../assets/cm.png')}
+        style={[
+          styles.cornerImage,
+          styles.cornerLeft,
+          { width: cornerSize, height: cornerSize, borderRadius: Math.round(cornerSize / 2), top: cornerTop },
+        ]}
+        resizeMode="cover"
+      />
+      <Image
+        source={require('../../../assets/dpcm.png')}
+        style={[
+          styles.cornerImage,
+          styles.cornerRight,
+          { width: cornerSize, height: cornerSize, borderRadius: Math.round(cornerSize / 2), top: cornerTop },
+        ]}
+        resizeMode="cover"
+      />
       <Animated.View
         style={[
           styles.content,
@@ -141,6 +165,18 @@ const styles = StyleSheet.create({
   footerText: {
     color: 'rgba(255, 255, 255, 0.8)',
     fontSize: theme.fontSizes.sm,
+  },
+  cornerImage: {
+    position: 'absolute',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  cornerLeft: {
+    left: theme.spacing.xl,
+  },
+  cornerRight: {
+    right: theme.spacing.xl,
   },
 });
 
